@@ -11,22 +11,21 @@ h1 {
     margin-bottom: 3%;
 }
 
-table{
+.tablero{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 90%;
+    max-width: 500px;
     margin: 0 auto;
-    border-spacing: 10px;
-}
-
-.tabla{
-    width: 90px;
-    height: 90px;
-    border-collapse: separate;
-    border-spacing: 12px;
-
 }
 
 .img{
-    width: 150px;
-    height: 150px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
     transition: transform 0.3s ease;
 }
 
