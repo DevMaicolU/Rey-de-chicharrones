@@ -13,7 +13,9 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve",
-    "strictPropertyInitialization": false
+    "moduleResolution": "bundler",
+    "strictPropertyInitialization": false,
+    "ignoreDeprecations": "6.0"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

@@ -1,0 +1,72 @@
+<section class="seccionTitulo">
+    <div class="container">
+
+        <h1>Encuentra las dos imagenes</h1>
+
+    </div>
+
+</section>
+
+<section class="seccionTabla">
+    <div class="tablero">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(1)" id="imgTabla1">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(2)" id="imgTabla2">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(3)" id="imgTabla3">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(4)" id="imgTabla4">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(5)" id="imgTabla5">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(6)" id="imgTabla6">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(7)" id="imgTabla7">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(8)" id="imgTabla8">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(9)" id="imgTabla9">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(10)" id="imgTabla10">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(11)" id="imgTabla11">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(12)" id="imgTabla12">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(13)" id="imgTabla13">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(14)" id="imgTabla14">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(15)" id="imgTabla15">
+        <img src="Images/Interrogacion.png" class="img"
+            (click)="descubrirTabla(16)" id="imgTabla16">
+    </div>
+</section>
+<!-- Modal de victoria -->
+<div class="modal d-block" tabindex="-1" *ngIf="mostrarModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">¡Felicidades!</h4>
+                <button type="button" class="btn-close"
+                    (click)="cerrarModal()"></button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+                {{mensaje2}}
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btnCerrarModal"
+                    (click)="cerrarModal()">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop show" *ngIf="mostrarModal"></div>

@@ -1,0 +1,46 @@
+.div-tarjetas{
+    background-color: #ffa722;
+}
+h5{
+    color: #B5122A;
+    font-weight: 700;
+    font-size: 23px;
+}
+
+.texto-carta{
+    font-size: 18px;
+}
+
+.precio-formato{
+    font-size: 20px;
+}
+
+.btn-agregar {
+  background-color: #B5122A;
+  color: #FFF8EE;
+  border: none;
+}
+
+.btn-agregar:hover {
+  background-color: #8f0e21;
+}
+
+.btn-agregar:active {
+  background-color: #f0798b;
+}
+
+.btn-cantidad {
+  background-color: #B5122A;
+  color: #FFF8EE;
+  border: none;
+  width: 28px;
+}
+
+.btn-cantidad:hover {
+  background-color: #8f0e21;
+}
+
+.cantidad-num {
+  font-weight: 600;
+  min-width: 20px;
+}

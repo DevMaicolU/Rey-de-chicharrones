@@ -1,0 +1,104 @@
+.BarraNav{
+    background-color: #c46a4f !important;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.botonVolver{
+    background-color: #c46a4f;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    color: white;
+
+}
+
+.botonVolver:hover {
+    background-color: #c25533;
+    border-color: #FFF8EE;
+    color:#ffe3bb;
+}
+
+.botonVolver:active {
+    background-color: #cf5a37;
+    border-color: #FFF8EE;
+    color:#fac7b3;
+}
+
+@keyframes salto {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-10px); }
+  50%  { transform: translateY(0); }
+  70%  { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+.botonVolver.saltando {
+  animation: salto 0.4s ;
+}
+
+
+.imagenNav{
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+}
+
+.botonBuscar{
+    background-color: #ffa82e;
+    border: solid 1px #FFF8EE
+}
+
+.botonBuscar:hover {
+    background-color: #f7c783;
+    border-color: #FFF8EE;
+}
+
+.botonBuscar:active {
+    background-color: #d3a769;
+    border-color: #FFF8EE;
+}
+
+.itemNav {
+  padding: 6px 14px;
+  border-radius: 20px;
+  transition: background-color 0.2s;
+}
+
+.itemNav:hover{
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffe3bb;
+}
+
+.itemNav:active{
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #fac7b3;
+}
+
+.boton-arriba {
+  background-color: #B5122A;
+  color: #FFF8EE;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.boton-arriba:hover {
+  background-color: #8f0e21;
+}
+
+.simbolo-carrito {
+  background-color: #B5122A;
+  color: #FFF8EE;
+  border-radius: 50%;
+  padding: 2px 7px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+

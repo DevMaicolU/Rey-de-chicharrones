@@ -19355,7 +19355,7 @@ function le() {
 	}, t.allowFsRead = void 0, t.loadImageFile = t.loadFile;
 }(E.API), function(e) {
 	function r() {
-		return (i.html2canvas ? Promise.resolve(i.html2canvas) : import("./html2canvas-lvYIdXjz.js").then((m) => /* @__PURE__ */ __toESM(m.default))).catch(function(t) {
+		return (i.html2canvas ? Promise.resolve(i.html2canvas) : import("./html2canvas.js").then((m) => /* @__PURE__ */ __toESM(m.default))).catch(function(t) {
 			return Promise.reject(/* @__PURE__ */ new Error("Could not load html2canvas: " + t));
 		}).then(function(t) {
 			return t.default ? t.default : t;

@@ -1,0 +1,77 @@
+<div class="container py-2">
+  <div class="mb-4">
+    <span class="badge text-bg-warning mb-2">CHECKOUT</span>
+    <h1 class="h2 text-danger fw-bold mb-1">Nuevo Pedido</h1>
+    <p class="text-secondary mb-0">Revisa el ticket, completa los datos y finaliza la venta.</p>
+  </div>
+  <div class="row g-4 align-items-start">
+    <div class="col-12 col-xl-8">
+      <section class="card rounded-4 border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-white border-0 p-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 text-danger fw-bold mb-0">Detalle del pedido</h2>
+            <span class="badge rounded-pill text-bg-light">{{ items().length }} productos</span>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr><th class="ps-4">Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (item of items(); track item.producto.idApi) {
+                <tr>
+                  <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3">
+                      <img [src]="item.producto.imageUrl || imagenRespaldo" (error)="manejarErrorImagen($event)" class="rounded-3 object-fit-cover" width="52" height="52" [alt]="item.producto.name">
+                      <div>
+                        <div class="fw-semibold">{{ item.producto.name }}</div>
+                        <small class="text-secondary">{{ item.producto.type }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ item.producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                  <td>
+                    <div class="input-group input-group-sm">
+                      <button class="btn btn-outline-danger" type="button" [disabled]="item.cantidad <= 1" (click)="cambiarCantidad(item, item.cantidad - 1)" aria-label="Restar uno">-</button>
+                      <input #campo class="form-control text-center" type="number" min="1" step="1" [value]="item.cantidad" (change)="editarCantidad(item, campo)" aria-label="Cantidad">
+                      <button class="btn btn-outline-danger" type="button" (click)="cambiarCantidad(item, item.cantidad + 1)" aria-label="Sumar uno">+</button>
+                    </div>
+                  </td>
+                  <td class="fw-bold">{{ item.subtotal | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                  <td><button class="btn btn-sm btn-link text-danger" type="button" (click)="eliminar(item)" aria-label="Eliminar producto">Eliminar</button></td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center py-5">
+                    <div class="text-secondary">Tu pedido está vacío.</div>
+                    <a class="btn btn-warning mt-3" routerLink="../comidas">Ir al menú</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-end p-4 bg-light">
+          <div class="text-end">
+            <small class="text-secondary d-block">Total general</small>
+            <span class="h3 text-danger fw-bold">{{ total() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="col-12 col-xl-4">
+      <section class="card rounded-4 border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="h5 text-danger fw-bold mb-4">Datos de la mesa</h2>
+          <label class="form-label" for="tableNumber">Número de mesa</label>
+          <input id="tableNumber" class="form-control mb-3" type="number" min="1" step="1" [(ngModel)]="tableNumber">
+          <label class="form-label" for="customerName">Nombre del cliente</label>
+          <input id="customerName" class="form-control mb-4" [(ngModel)]="customerName">
+          @if (error) { <div class="alert alert-danger rounded-3 py-2" role="alert">{{ error }}</div> }
+          <button class="btn btn-danger btn-lg w-100 rounded-3" type="button" [disabled]="!items().length" (click)="finalizarPedido()">Finalizar pedido</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

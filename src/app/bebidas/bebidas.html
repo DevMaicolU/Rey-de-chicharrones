@@ -1,55 +1,17 @@
-<section class="seccionTitulo">
-  <div class="container">
-    <div class="row align-items-center">
-
-      <div class="col-md-6 divTitulo">
-        <h1>☆ Nuestras bebidas ☆</h1>
-      </div>
-
-      <div class="col-md-6 divBusqueda">
-        <form class="d-flex flex-wrap gap-2 barraBusqueda">
-          <input class="form-control" type="text" placeholder="Buscar"
-            #textoBusqueda style="max-width: 150px;">
-          <select class="form-select" #tipoBusqueda style="max-width: 150px;">
-            <option value="nombre">Por nombre</option>
-            <option value="ingrediente">Por ingrediente</option>
-          </select>
-
-          <select class="form-select" #selectTipo style="max-width: 160px;">
-            <option value>Cualquier tipo</option>
-            <option value="Alcoholic">Alcohólica</option>
-            <option value="Non_Alcoholic">Sin alcohol</option>
-          </select>
-        </form>
-        <div class="decoBotonBuscar">
-          <button class="btn botonBuscar" type="button"
-            (click)="buscar(textoBusqueda.value, tipoBusqueda.value, selectTipo.value)">
-            Buscar
-          </button>
-        </div>
-      </div>
-
+<div class="container py-2">
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+      <span class="badge text-bg-warning mb-2">MENÚ ACTIVO</span>
+      <h1 class="h2 text-danger fw-bold mb-1">Bebidas</h1>
+      <p class="text-secondary mb-0">Selecciona productos para construir el pedido.</p>
     </div>
+    <span class="small text-secondary">{{ bebidas().length }} opciones disponibles</span>
   </div>
-</section>
-
-<div class="container">
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    @for (cat of categorias; track cat) {
-    <button class="btn"
-      [class.btn-primary]="filtroActual === cat"
-      [class.btn-outline-primary]="filtroActual !== cat"
-      (click)="filtrarPorCategoria(cat)">
-      {{ cat }}
-    </button>
-    }
-  </div>
-
-  <div class="row g-4">
-    @for (b of bebidas(); track $index) {
-    <div class="col-12 col-sm-6 col-md-4">
-      <app-tarjeta-bebida [bebida]="b"></app-tarjeta-bebida>
-    </div>
+  <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+    @for (producto of bebidas(); track producto.id) {
+      <div class="col"><app-tarjeta-producto [producto]="producto" /></div>
+    } @empty {
+      <div class="col-12"><div class="alert alert-warning rounded-4 border-0 shadow-sm">No hay bebidas creadas. El administrador puede crearlas desde Gestión de Inventario.</div></div>
     }
   </div>
 </div>

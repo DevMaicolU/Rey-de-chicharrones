@@ -1,9 +1,63 @@
-html, body{
+html, body {
     background-color: #FFF8EE !important;
-    font-family: 'Poppins', sans-serif !important;
+    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
     scroll-behavior: smooth;
 }
 
-main{
-    padding-top: 76px;
+.hover-shadow {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.75rem 1.5rem rgba(127, 21, 37, 0.12) !important;
+}
+
+.ticket-shell {
+    width: min(100%, 390px);
+    margin-inline: auto;
+    padding: 1.5rem 1.25rem;
+    color: #27221e;
+    background: #fffdf8;
+    border: 1px solid #e5d9c7;
+    border-top: 8px solid #7f1525;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.5rem 1.25rem rgba(127, 21, 37, 0.12);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.82rem;
+}
+
+.ticket-pdf-host {
+    position: absolute;
+    top: 0;
+    left: -10000px;
+    width: 390px;
+    pointer-events: none;
+}
+
+.ticket-brand {
+    color: #7f1525;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+
+.ticket-rule {
+    margin: 0.8rem 0;
+    border-top: 1px dashed #9e8f7b;
+}
+
+.ticket-meta {
+    line-height: 1.7;
+}
+
+.ticket-items {
+    line-height: 1.8;
+}
+
+.ticket-total {
+    color: #7f1525;
+    font-size: 1.05rem;
+    font-weight: 800;
 }

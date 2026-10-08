@@ -1,0 +1,62 @@
+<div class="container">
+  <div class="mb-4">
+    <h1 class="h2 text-danger mb-1">Gestión de Inventario</h1>
+    <p class="text-secondary mb-0">Activa productos del catálogo maestro para publicarlos en el menú.</p>
+  </div>
+
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4 text-danger mb-0">Catálogo Maestro</h2>
+      <span class="badge text-bg-warning">{{ catalog().length }} productos</span>
+    </div>
+    <div class="row g-3">
+      @for (product of catalog(); track product.idApi) {
+        <div class="col-12 col-md-6 col-xl-4">
+          <article class="card h-100 border-0 shadow-sm">
+            <div class="ratio ratio-4x3">
+              <img [src]="product.imageUrl || imagenRespaldo" (error)="manejarErrorImagen($event)" class="card-img-top object-fit-cover" [alt]="product.name">
+            </div>
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between gap-2">
+                <h3 class="h5">{{ product.name }}</h3>
+                <span class="badge text-bg-light align-self-start">{{ product.type }}</span>
+              </div>
+              <p class="small text-secondary flex-grow-1">{{ product.ingredients.join(', ') }}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-danger">{{ product.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                <button class="btn btn-sm btn-warning" type="button" [disabled]="isActive(product)" (click)="add(product)">{{ isActive(product) ? 'Activo' : 'Agregar' }}</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4 text-danger mb-0">Productos Activos</h2>
+      <span class="badge text-bg-danger">{{ activeProducts().length }} en menú</span>
+    </div>
+    <div class="card border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-danger"><tr><th>Producto</th><th>Tipo</th><th>Ingredientes</th><th>Precio</th><th></th></tr></thead>
+          <tbody>
+            @for (product of activeProducts(); track product.idApi) {
+              <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.type }}</td>
+                <td class="small">{{ product.ingredients.join(', ') }}</td>
+                <td>{{ product.price | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                <td class="text-end"><button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(product)">Eliminar</button></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="text-center text-secondary py-4">Aún no hay productos activos.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>

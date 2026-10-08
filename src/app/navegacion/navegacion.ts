@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ServicioCarrito } from '../servicios/servicio-carrito';
 
 @Component({
   selector: 'app-navegacion',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './navegacion.html',
   styleUrl: './navegacion.css',
 })

@@ -1,0 +1,90 @@
+h1 {
+    background-color: #ffa722;
+    font-weight: 600;
+    text-align: center;
+    margin-left: 3%;
+
+}
+
+.seccionTitulo {
+    background-color: #ffa722 !important;
+    margin-bottom: 3%;
+}
+
+.tablero{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 90%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.img{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.img:hover{
+    transform: scale(1.1);
+
+}
+
+.mensaje{
+    color: aquamarine;
+    font-size: 40px;
+}
+
+.botonReinicio{
+    background-color: aliceblue;
+}
+
+.modal-content{
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.modal-header{
+    background-color: #B5122A;
+    border-bottom: none;
+}
+
+.modal-title{
+    color: #FFF8EE;
+    font-weight: 700;
+}
+
+.modal-header .btn-close{
+    filter: brightness(0) invert(1);
+}
+
+.modal-body{
+    background-color: #FFF8EE;
+    color: #2B2420;
+    font-size: 22px;
+    text-align: center;
+    padding: 30px;
+}
+
+.modal-footer{
+    background-color: #FFF8EE;
+    border-top: none;
+    justify-content: center;
+}
+
+.btnCerrarModal{
+    background-color: #ffa722;
+    color: #2B2420;
+    border: none;
+    font-weight: 600;
+}
+
+.btnCerrarModal:hover{
+    background-color: #f19c1d;
+    color: #2B2420;
+}

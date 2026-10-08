@@ -1,0 +1,246 @@
+<div class="container">
+  <header class="mb-4">
+    <h1 class="h2 text-danger mb-1">Gestión de Inventario</h1>
+    <p class="text-secondary mb-0">Crea productos locales y define su receta de insumos (BOM).</p>
+  </header>
+
+  <section class="card border-0 shadow-sm mb-5">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+      <h2 class="h4 mb-0">Crear nuevo producto</h2>
+    </div>
+    <div class="card-body px-4">
+      <form [formGroup]="productForm" (ngSubmit)="createProduct()" novalidate>
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="productName">Nombre</label>
+            <input id="productName" class="form-control" formControlName="name" required>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label" for="productType">Tipo</label>
+            <select id="productType" class="form-select" formControlName="type">
+              <option value="Comida">Comida</option>
+              <option value="Bebida">Bebida</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label" for="productPrice">Precio</label>
+            <input id="productPrice" class="form-control" type="number" min="1" formControlName="price" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="productDescription">Descripción</label>
+            <textarea id="productDescription" class="form-control" rows="2" formControlName="description" required></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="productImageUrl">Imagen (URL local o base64)</label>
+            <input id="productImageUrl" class="form-control" formControlName="imageUrl">
+          </div>
+        </div>
+
+        <div class="mt-4" formArrayName="recipe">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="h5 mb-0">Receta / lista de materiales</h3>
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="addRecipeItem()">Agregar insumo</button>
+          </div>
+          @for (recipeItem of recipeItems.controls; track $index; let index = $index) {
+            <div class="row g-2 align-items-end mb-2" [formGroupName]="index">
+              <div class="col-12 col-md-7">
+                <label class="form-label small" [for]="'recipeSupply' + index">Insumo</label>
+                <select class="form-select" [id]="'recipeSupply' + index" formControlName="insumoCode" required>
+                  <option value="">Selecciona un insumo</option>
+                  @for (supply of supplies(); track supply.code) {
+                    <option [value]="supply.code">{{ supply.name }} ({{ supply.unitOfMeasure }})</option>
+                  }
+                </select>
+              </div>
+              <div class="col-10 col-md-3">
+                <label class="form-label small" [for]="'recipeQuantity' + index">Cantidad requerida</label>
+                <input class="form-control" [id]="'recipeQuantity' + index" type="number" min="0.001" step="0.001" formControlName="quantityNeeded" required>
+              </div>
+              <div class="col-2 col-md-2">
+                <button class="btn btn-outline-secondary w-100" type="button" (click)="removeRecipeItem(index)" aria-label="Eliminar insumo">Quitar</button>
+              </div>
+            </div>
+          } @empty {
+            <p class="small text-secondary mb-0">Agrega los insumos que consume este producto.</p>
+          }
+        </div>
+
+        @if (productError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ productError }}</div> }
+        @if (productMessage) { <div class="alert alert-success py-2 mt-3 mb-0" role="status">{{ productMessage }}</div> }
+        <div class="text-end mt-4">
+          <button class="btn btn-warning fw-semibold" type="submit">Crear producto</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4 text-danger mb-0">Productos locales</h2>
+      <span class="badge text-bg-danger">{{ products().length }} en menú</span>
+    </div>
+    <div class="row g-3">
+      @for (product of products(); track product.id) {
+        <article class="col-12 col-md-6 col-xl-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between gap-2">
+                <h3 class="h5">{{ product.name }}</h3>
+                <span class="badge text-bg-light">{{ product.type }}</span>
+              </div>
+              <p class="small text-secondary">{{ product.description }}</p>
+              <p class="small mb-3">
+                @for (item of product.recipe; track item.insumoCode) {
+                  <span class="d-block">{{ supplyName(item.insumoCode) }}: {{ item.quantityNeeded }}</span>
+                }
+              </p>
+              <div class="d-flex justify-content-between align-items-center">
+                <strong>{{ product.price | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
+                <button class="btn btn-sm btn-outline-danger" type="button" (click)="removeProduct(product)">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section>
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-body p-4">
+        <div class="mb-4">
+          <h2 class="h4 text-danger mb-1">Crear nuevo insumo</h2>
+          <p class="text-secondary mb-0">Registra materia prima disponible para las recetas y el inventario.</p>
+        </div>
+        <form [formGroup]="supplyForm" (ngSubmit)="createSupply()" novalidate>
+          <div class="row g-3">
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-semibold" for="supplyCode">Código de insumo</label>
+              <input id="supplyCode" class="form-control form-control-lg" formControlName="code"
+                placeholder="Ej. CAR-002" autocomplete="off" required>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="supplyName">Nombre</label>
+              <input id="supplyName" class="form-control form-control-lg" formControlName="name"
+                placeholder="Ej. Carne de cerdo" autocomplete="off" required>
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label fw-semibold" for="supplyUnit">Unidad</label>
+              <select id="supplyUnit" class="form-select form-select-lg" formControlName="unitOfMeasure">
+                <option value="gramos">Gramos</option>
+                <option value="unidades">Unidades</option>
+                <option value="mililitros">Mililitros</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-semibold" for="supplyQuantity">Cantidad inicial</label>
+              <input id="supplyQuantity" class="form-control form-control-lg" type="number" min="0" step="0.001"
+                formControlName="quantity" required>
+            </div>
+          </div>
+          @if (supplyError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ supplyError }}</div> }
+          @if (supplyMessage) { <div class="alert alert-success py-2 mt-3 mb-0" role="status">{{ supplyMessage }}</div> }
+          <div class="text-end mt-4">
+            <button class="btn btn-danger btn-lg px-4" type="submit">Guardar insumo</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <h2 class="h4 text-danger mb-3">Existencias de insumos</h2>
+    <div class="table-responsive card border-0 shadow-sm">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark"><tr><th>Código</th><th>Insumo</th><th>Unidad</th><th>Cantidad</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+        <tbody>
+          @for (supply of supplies(); track supply.code) {
+            <tr>
+              <td class="font-monospace small">{{ supply.code }}</td>
+              <td class="fw-semibold">{{ supply.name }}</td>
+              <td>{{ supply.unitOfMeasure }}</td>
+              <td>{{ supply.quantity }}</td>
+              <td><span class="badge rounded-pill">{{ supply.status | titlecase }}</span></td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'Acciones para ' + supply.name">
+                  <button class="btn btn-outline-warning" type="button" (click)="openEditSupply(supply)" [attr.aria-label]="'Editar ' + supply.name" title="Editar">
+                    <span aria-hidden="true">&#9998;</span>
+                  </button>
+                  <button class="btn btn-outline-danger" type="button" (click)="openDeleteSupply(supply)" [attr.aria-label]="'Eliminar ' + supply.name" title="Eliminar">
+                    <span aria-hidden="true">&#128465;</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (editSupplyModalVisible) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editSupplyTitle">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5" id="editSupplyTitle">Editar insumo</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeEditSupply()"></button>
+          </div>
+          <form [formGroup]="editSupplyForm" (ngSubmit)="saveEditedSupply()" novalidate>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="editSupplyCode">Código</label>
+                <input id="editSupplyCode" class="form-control" formControlName="code" readonly>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="editSupplyName">Nombre</label>
+                <input id="editSupplyName" class="form-control" formControlName="name" required>
+              </div>
+              <div class="row g-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold" for="editSupplyUnit">Unidad</label>
+                  <select id="editSupplyUnit" class="form-select" formControlName="unitOfMeasure">
+                    <option value="gramos">Gramos</option>
+                    <option value="unidades">Unidades</option>
+                    <option value="mililitros">Mililitros</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold" for="editSupplyQuantity">Cantidad</label>
+                  <input id="editSupplyQuantity" class="form-control" type="number" min="0" step="0.001" formControlName="quantity" required>
+                </div>
+              </div>
+              @if (editSupplyError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ editSupplyError }}</div> }
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light" type="button" (click)="closeEditSupply()">Cancelar</button>
+              <button class="btn btn-danger" type="submit">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
+
+  @if (deleteSupplyModalVisible && deletingSupply; as supply) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="deleteSupplyTitle">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5" id="deleteSupplyTitle">Eliminar insumo</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeDeleteSupply()"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-0">¿Está seguro de eliminar este insumo?</p>
+            <p class="small text-secondary mt-2 mb-0"><strong>{{ supply.code }}</strong> · {{ supply.name }}</p>
+            @if (deleteSupplyError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ deleteSupplyError }}</div> }
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-light" type="button" (click)="closeDeleteSupply()">Cancelar</button>
+            <button class="btn btn-danger" type="button" (click)="confirmDeleteSupply()">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
+</div>

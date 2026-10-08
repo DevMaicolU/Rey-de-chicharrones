@@ -1,3 +1,4 @@
+@if (bebida) {
 <div class="card h-100">
   <img [src]="bebida.foto" class="card-img-top" [alt]="bebida.nombre">
   <div class="card-body text-center div-tarjetas">
@@ -13,3 +14,4 @@
       (click)="agregar()">Agregar</button>
   </div>
 </div>
+}

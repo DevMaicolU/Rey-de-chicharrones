@@ -1,0 +1,17 @@
+@if (bebida) {
+<div class="card h-100">
+  <img [src]="bebida.foto" class="card-img-top" [alt]="bebida.nombre">
+  <div class="card-body text-center div-tarjetas">
+    <h5 class="card-title">{{ bebida.nombre }}</h5>
+    <p class="texto-carta">{{ bebida.ingredientes.join(', ') }}</p>
+    <p class="fw-bold precio-formato">${{ bebida.precio }}</p>
+    <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+      <button class="btn btn-sm btn-cantidad" (click)="disminuir()">-</button>
+      <span class="cantidad-num">{{ cantidad }}</span>
+      <button class="btn btn-sm btn-cantidad" (click)="aumentar()">+</button>
+    </div>
+    <button class="btn btn-primary btn-agregar"
+      (click)="agregar()">Agregar</button>
+  </div>
+</div>
+}

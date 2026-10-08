@@ -1,0 +1,16 @@
+@if (plato) {
+<div class="card h-100">
+  <img [src]="plato.foto" class="card-img-top" [alt]="plato.nombre">
+  <div class="card-body text-center div-tarjetas">
+    <h5 class="card-title">{{ plato.nombre }}</h5>
+    <p class="texto-carta">{{ plato.ingredientes.join(', ') }}</p>
+    <p class="fw-bold precio-formato">${{ plato.precio }}</p>
+    <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+      <button class="btn btn-sm btn-cantidad" (click)="disminuir()">-</button>
+      <span class="cantidad-num">{{ cantidad }}</span>
+      <button class="btn btn-sm btn-cantidad" (click)="aumentar()">+</button>
+    </div>
+    <button class="btn btn-primary btn-agregar" (click)="agregar()">Agregar</button>
+  </div>
+</div>
+}

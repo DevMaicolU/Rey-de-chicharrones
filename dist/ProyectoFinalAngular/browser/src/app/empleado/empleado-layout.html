@@ -1,0 +1,27 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" routerLink="/empleado">
+      <img src="/Images/manila.jpg" (error)="manejarErrorImagen($event)" class="rounded-3" width="42" height="42" alt="MANILA">
+      <span>MANILA <small class="fw-normal opacity-75">POS</small></span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#employeeNav" aria-controls="employeeNav" aria-expanded="false" aria-label="Abrir menú">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div id="employeeNav" class="collapse navbar-collapse">
+      <div class="navbar-nav me-auto gap-lg-2">
+        <a class="nav-link" routerLink="comidas" routerLinkActive="active fw-bold">Comidas</a>
+        <a class="nav-link" routerLink="bebidas" routerLinkActive="active fw-bold">Bebidas</a>
+        <a class="nav-link position-relative" routerLink="pedido" routerLinkActive="active fw-bold">
+          Nuevo Pedido
+          @if ((cartCount$ | async) ?? 0; as count) {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-warning">{{ count }}</span>
+          }
+        </a>
+        <a class="nav-link" routerLink="registros" routerLinkActive="active fw-bold">Mis Registros</a>
+      </div>
+      <span class="navbar-text text-white me-3">{{ auth.activeUser?.name }}</span>
+      <button class="btn btn-outline-light btn-sm rounded-3" type="button" (click)="salir()">Cerrar Sesión</button>
+    </div>
+  </div>
+</nav>
+<main class="container-fluid py-4 bg-light min-vh-100"><router-outlet /></main>

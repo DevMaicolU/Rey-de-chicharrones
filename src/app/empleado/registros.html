@@ -1,0 +1,73 @@
+<div class="container">
+  <div class="mb-4">
+    <span class="badge text-bg-warning mb-2">HISTORIAL</span>
+    <h1 class="h2 text-danger mb-1">Mis Registros</h1>
+    <p class="text-secondary mb-0">Consulta tus ventas y descarga el comprobante electrónico.</p>
+  </div>
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-danger">
+          <tr><th>Pedido</th><th>Mesa</th><th>Cliente</th><th>Productos</th><th>Fecha</th><th>Total</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (order of misPedidos(); track order.id) {
+            <tr>
+              <td>#{{ order.id }}</td>
+              <td>{{ order.tableNumber }}</td>
+              <td>{{ order.customerName }}</td>
+              <td class="small">{{ resumen(order) }}</td>
+              <td>{{ order.createdAt | date:'short' }}</td>
+              <td class="fw-bold">{{ order.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+              <td class="text-end"><button class="btn btn-outline-danger btn-sm" type="button" (click)="descargarFacturaPdf(order)">Descargar Factura PDF</button></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="text-center text-secondary py-4">No tienes pedidos registrados.</td></tr>
+          }
+        </tbody>
+        @if (misPedidos().length) {
+          <tfoot class="table-light">
+            <tr>
+              <td colspan="6" class="text-end fw-semibold">Total vendido ({{ misPedidos().length }} pedidos)</td>
+              <td class="fw-bold text-danger">{{ totalVendido() | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+            </tr>
+          </tfoot>
+        }
+      </table>
+    </div>
+  </div>
+  <div class="ticket-pdf-host" aria-hidden="true">
+    @for (ticket of misPedidos(); track ticket.id) {
+    <section class="ticket-shell" [id]="'ticket-pdf-' + ticket.id" aria-label="Factura electrónica">
+      <div class="ticket-header text-center">
+        <div class="ticket-brand">MANILA</div>
+        <div class="small">Restaurante Manila S.A.S.</div>
+        <div class="small">NIT 901.234.567-8</div>
+        <div class="ticket-rule"></div>
+        <div class="small">FACTURA ELECTRÓNICA #{{ ticket.orderId }}</div>
+      </div>
+      <div class="ticket-meta small">
+        <div><strong>Fecha:</strong> {{ ticket.date | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div><strong>Cliente:</strong> {{ ticket.clientName }}</div>
+        <div><strong>Mesa:</strong> {{ ticket.table }}</div>
+        <div><strong>Pago:</strong> <span class="text-capitalize">{{ ticket.paymentMethod || 'Efectivo' }}</span></div>
+      </div>
+      <div class="ticket-rule"></div>
+      <div class="ticket-items">
+        @for (item of ticket.products; track item.productId) {
+          <div class="d-flex justify-content-between gap-3">
+            <span>{{ item.quantity }} x {{ item.productName }}</span>
+            <span>{{ item.unitPrice * item.quantity | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        }
+      </div>
+      <div class="ticket-rule"></div>
+      <div class="d-flex justify-content-between"><span>Subtotal</span><span>{{ ticket.subtotal ?? ticket.total | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div>
+      @if (ticket.discount) { <div class="d-flex justify-content-between text-success"><span>Descuento 10%</span><span>-{{ ticket.discount | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div> }
+      <div class="d-flex justify-content-between ticket-total mt-2"><span>TOTAL</span><span>{{ ticket.total | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div>
+      <div class="ticket-rule"></div>
+      <div class="text-center small">¡Gracias por tu visita!</div>
+    </section>
+    }
+  </div>
+</div>

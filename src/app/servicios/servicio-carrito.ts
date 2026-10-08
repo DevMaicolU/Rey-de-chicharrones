@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Plato } from '../entidades/plato';
 import { Bebida } from '../entidades/bebida';
+import { Product } from '../entidades/modelos';
 
 export interface ItemPedido {
   nombre: string;
@@ -21,6 +22,10 @@ export class ServicioCarrito {
 
   agregarBebida(bebida: Bebida, cantidad: number) {
     this.agregar(bebida.nombre as string, bebida.precio, bebida.foto as string, cantidad);
+  }
+
+  agregarProducto(producto: Product, cantidad: number): void {
+    this.agregar(producto.name, producto.price, producto.imageUrl ?? '', cantidad);
   }
 
   private agregar(nombre: string, precio: number, foto: string, cantidad: number) {

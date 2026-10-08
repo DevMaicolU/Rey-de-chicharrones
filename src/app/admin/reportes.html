@@ -1,0 +1,63 @@
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+      <span class="text-uppercase small fw-bold text-warning-emphasis">Inteligencia comercial</span>
+      <h1 class="h2 text-danger mb-1">Reporte de ventas</h1>
+      <p class="text-secondary mb-0">Consulta pedidos completados e ingresos por periodo.</p>
+    </div>
+    <button class="btn btn-outline-secondary" type="button" (click)="clearFilters()">Limpiar filtros</button>
+  </div>
+
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label small fw-semibold" for="startDate">Fecha inicial</label>
+          <input id="startDate" class="form-control" type="date" [(ngModel)]="startDate">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label small fw-semibold" for="endDate">Fecha final</label>
+          <input id="endDate" class="form-control" type="date" [(ngModel)]="endDate">
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="small text-secondary">Rango aplicado</div>
+          <div class="fw-semibold">{{ startDate || 'Inicio' }} — {{ endDate || 'Hoy' }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Pedidos completados</div><div class="display-6 fw-bold text-danger">{{ totalPedidos() }}</div></div></div></div>
+    <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Ingresos del periodo</div><div class="h3 fw-bold text-danger mb-0">{{ totalIngresos() | currency:'COP':'symbol-narrow':'1.0-0' }}</div></div></div></div>
+    <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Ticket promedio</div><div class="h3 fw-bold text-danger mb-0">{{ promedioVenta() | currency:'COP':'symbol-narrow':'1.0-0' }}</div></div></div></div>
+  </div>
+
+  @if (!filteredOrders().length) {
+    <div class="alert alert-warning border-0 shadow-sm" role="alert">
+      <strong>Sin ventas en el periodo seleccionado.</strong> Ajusta las fechas para consultar otro rango.
+    </div>
+  } @else {
+    <div class="card border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-danger"><tr><th>Pedido</th><th>Fecha</th><th>Cliente</th><th>Empleado</th><th>Productos</th><th>Método</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+            @for (order of filteredOrders(); track order.id) {
+              <tr>
+                <td class="font-monospace">#{{ order.orderId }}</td>
+                <td>{{ order.date | date:'medium' }}</td>
+                <td>{{ order.clientName }}</td>
+                <td>{{ order.employeeName }}</td>
+                <td class="small">{{ resumen(order) }}</td>
+                <td><span class="badge text-bg-light text-capitalize">{{ order.paymentMethod || 'No especificado' }}</span></td>
+                <td class="text-end fw-bold">{{ order.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot class="table-light"><tr><td colspan="6" class="text-end fw-semibold">Total ingresos</td><td class="text-end fw-bold text-danger">{{ totalIngresos() | currency:'COP':'symbol-narrow':'1.0-0' }}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,45 @@
+<div class="container my-5 pedidos-contenedor">
+  <h3>Tu pedido</h3>
+
+  @if (carrito.items().length === 0) {
+    <p class="text-center">Aún no has agregado platos ni bebidas.</p>
+  } @else {
+    <div class="row g-3 mb-4">
+      @for (item of carrito.items(); track item.nombre) {
+        <div class="col-12">
+          <div class="d-flex align-items-center item-pedido p-2">
+            <img [src]="item.foto" class="img-item" [alt]="item.nombre">
+            <div class="flex-grow-1 ms-3">
+              <p class="mb-0 fw-bold">{{ item.nombre }}</p>
+              <p class="mb-0">${{ item.precio }} c/u</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm btn-cantidad" (click)="disminuir(item)">-</button>
+              <span>{{ item.cantidad }}</span>
+              <button class="btn btn-sm btn-cantidad" (click)="aumentar(item)">+</button>
+              <button class="btn btn-sm btn-eliminar" (click)="eliminar(item)">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <h4 class="text-end">Total: ${{ carrito.total() }}</h4>
+
+    <div class="datos-cliente mt-4">
+      <h5>Datos de entrega</h5>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <input class="form-control" placeholder="Nombre completo" [(ngModel)]="nombreCompleto">
+        </div>
+        <div class="col-md-4">
+          <input class="form-control" placeholder="Celular" [(ngModel)]="celular">
+        </div>
+        <div class="col-md-4">
+          <input class="form-control" placeholder="Dirección" [(ngModel)]="direccion">
+        </div>
+      </div>
+      <button class="btn btn-realizar mt-3" (click)="realizarPedido()">Realizar pedido</button>
+    </div>
+  }
+</div>

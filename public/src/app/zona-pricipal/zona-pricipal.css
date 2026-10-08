@@ -1,0 +1,80 @@
+.banner-manila {
+  width: 100%;
+  height: auto;
+
+}
+
+h1 {
+  color: #B5122A;
+  text-align: left;
+  margin-top: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+h2 {
+  color: #B5122A;
+  text-align: right;
+  margin-top: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+h3 {
+  color: #B5122A;
+  text-align: center;
+  margin-top: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 50px;
+}
+
+h4 {
+  background-color: #ffa722;
+  font-weight: 600;
+  text-align: center;
+  padding-top: 1%;
+  padding-bottom: 1%;
+  margin-bottom: 3%;
+  font-size: 50px;
+}
+
+h5 {
+  color: black;
+  text-align: center;
+  margin-top: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 30px;
+  border-radius: 10px;
+  background-color: #ffa722;
+}
+
+
+.textos {
+  text-align: left;
+  color: #2B2420;
+  font-variant: normal;
+  font-weight: 400;
+  font-size: 18px;
+}
+
+.textos2 {
+  text-align: right;
+  color: #2B2420;
+  font-variant: normal;
+  font-weight: 400;
+  font-size: 18px;
+}
+
+.imagenesRestaurante {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border-radius: 10px;
+  border: solid 5px #ffa82e;
+}
+
+
+
+
+

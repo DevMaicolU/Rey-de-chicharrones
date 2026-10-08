@@ -1,0 +1,154 @@
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="h2 text-danger mb-1">Gestión de Usuarios</h1>
+      <p class="text-secondary mb-0">Administra las cuentas de administradores y empleados.</p>
+    </div>
+    <button class="btn btn-danger" type="button" (click)="openCreateModal()">
+      <span aria-hidden="true">+</span> Registrar Nuevo Usuario
+    </button>
+  </div>
+
+  @if (message) {
+    <div class="alert alert-success" role="status">{{ message }}</div>
+  }
+  @if (error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  }
+
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-danger">
+          <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th class="text-end">Acciones</th></tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="fw-semibold">{{ user.name }}</td>
+              <td>{{ user.username }}</td>
+              <td>
+                <span class="badge" [class.text-bg-danger]="user.role === 'admin'" [class.text-bg-warning]="user.role === 'empleado'">
+                  {{ user.role === 'admin' ? 'Administrador' : 'Empleado' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'Acciones para ' + user.name">
+                  <button class="btn btn-outline-warning" type="button" (click)="openEditModal(user)" title="Editar" [attr.aria-label]="'Editar ' + user.name">
+                    <span aria-hidden="true">&#9998;</span>
+                  </button>
+                  <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(user)" title="Eliminar" [disabled]="esUsuarioActual(user)" [attr.aria-label]="'Eliminar ' + user.name">
+                    <span aria-hidden="true">&#128465;</span>
+                  </button>
+                </div>
+                @if (esUsuarioActual(user)) { <span class="small text-secondary ms-2">Cuenta actual</span> }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="text-center text-secondary py-4">No hay usuarios registrados.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (createModalVisible) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="createUserTitle">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5" id="createUserTitle">Registrar nuevo usuario</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeCreateModal()"></button>
+          </div>
+          <form [formGroup]="createForm" (ngSubmit)="createUser()" novalidate>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="createUserName">Nombre</label>
+                <input id="createUserName" class="form-control" formControlName="name" autocomplete="name" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="createUsername">Usuario</label>
+                <input id="createUsername" class="form-control" formControlName="username" autocomplete="username" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="createPassword">Contraseña</label>
+                <input id="createPassword" class="form-control" type="password" formControlName="password" autocomplete="new-password" required>
+              </div>
+              <label class="form-label fw-semibold" for="createRole">Rol</label>
+              <select id="createRole" class="form-select" formControlName="role">
+                <option value="empleado">Empleado</option>
+                <option value="admin">Administrador</option>
+              </select>
+              @if (error) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ error }}</div> }
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light" type="button" (click)="closeCreateModal()">Cancelar</button>
+              <button class="btn btn-danger" type="submit">Registrar usuario</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
+
+  @if (editModalVisible && selectedUser; as user) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5" id="editUserTitle">Editar usuario</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeEditModal()"></button>
+          </div>
+          <form [formGroup]="editForm" (ngSubmit)="updateUser()" novalidate>
+            <div class="modal-body">
+              <p class="small text-secondary">Cuenta: <strong>{{ user.username }}</strong></p>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="editUserName">Nombre</label>
+                <input id="editUserName" class="form-control" formControlName="name" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="editPassword">Nueva contraseña</label>
+                <input id="editPassword" class="form-control" type="password" formControlName="password" placeholder="Dejar vacía para conservarla" autocomplete="new-password">
+              </div>
+              <label class="form-label fw-semibold" for="editRole">Rol</label>
+              <select id="editRole" class="form-select" formControlName="role">
+                <option value="empleado">Empleado</option>
+                <option value="admin">Administrador</option>
+              </select>
+              @if (editError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ editError }}</div> }
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light" type="button" (click)="closeEditModal()">Cancelar</button>
+              <button class="btn btn-danger" type="submit">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
+
+  @if (deleteModalVisible && selectedUser; as user) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="deleteUserTitle">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5" id="deleteUserTitle">Eliminar usuario</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeDeleteModal()"></button>
+          </div>
+          <div class="modal-body">
+            <p>¿Está seguro de eliminar este usuario?</p>
+            <p class="small text-secondary mb-0"><strong>{{ user.name }}</strong> · {{ user.username }}</p>
+            @if (deleteError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ deleteError }}</div> }
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-light" type="button" (click)="closeDeleteModal()">Cancelar</button>
+            <button class="btn btn-danger" type="button" (click)="confirmDelete()">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
+</div>
