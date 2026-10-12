@@ -24,4 +24,4 @@
     </div>
   </div>
 </nav>
-<main class="container-fluid py-4 bg-light min-vh-100"><router-outlet /></main>
+@if (database.persistenceError$ | async; as persistenceError) { @if (persistenceError) { <div class="alert alert-danger rounded-0 mb-0" role="alert">{{ persistenceError }}</div> } }<main class="container-fluid py-4 bg-light min-vh-100"><router-outlet /></main>

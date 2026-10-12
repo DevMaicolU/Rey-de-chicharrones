@@ -34,23 +34,32 @@
   @if (selectedProvider; as provider) {
     <section class="card border-0 shadow-sm"><div class="card-header bg-white"><h2 class="h5 mb-0">Detalle: {{ provider.name }}</h2></div><div class="card-body">
       <ul class="nav nav-tabs"><li class="nav-item"><span class="nav-link active">Datos</span></li></ul>
-      @if (editingProvider?.id === provider.id) {
-        <form class="row g-3 mt-1" [formGroup]="editForm" (ngSubmit)="saveEdit()">
-          <div class="col-md-4"><label class="form-label">Razón social</label><input class="form-control" formControlName="name"></div>
-          <div class="col-md-4"><label class="form-label">NIT</label><input class="form-control" formControlName="nit"></div>
-          <div class="col-md-4"><label class="form-label">Correo</label><input class="form-control" formControlName="email"></div>
-          <div class="col-md-4"><label class="form-label">Contacto</label><input class="form-control" formControlName="contactName"></div>
-          <div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" formControlName="phone"></div>
-          <div class="col-md-4"><label class="form-label">Dirección</label><input class="form-control" formControlName="address"></div>
-          <div class="col-12"><label class="form-label">Notas</label><textarea class="form-control" formControlName="notes"></textarea></div>
-          <div class="col-12"><button class="btn btn-danger me-2" type="submit">Guardar cambios</button><button class="btn btn-light" type="button" (click)="cancelEdit()">Cancelar</button></div>
-        </form>
-      }
       <p class="mt-3 mb-1"><strong>NIT:</strong> {{ provider.nit }} · <strong>Correo:</strong> {{ provider.email }}</p>
       <hr><h3 class="h6">Insumos que suministra</h3>
       <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Insumo</th><th>Último precio</th><th>Costo unidad base</th></tr></thead><tbody>@for (item of suppliedBy(provider.id); track item.supplyCode) {<tr><td>{{ item.supplyName }}</td><td>{{ item.packageCost | currency:'COP':'symbol-narrow':'1.0-0' }}</td><td>{{ item.costPerBaseUnit | currency:'COP':'symbol-narrow':'1.2-2' }}</td></tr>} @empty {<tr><td colspan="3">Aún no hay compras recibidas.</td></tr>}</tbody></table></div>
       <hr><h3 class="h6">Historial de compras</h3>
       <div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>Fecha</th><th>Estado</th><th>Total</th></tr></thead><tbody>@for (purchase of purchasesFor(provider.id); track purchase.purchaseId) {<tr><td>#{{ purchase.purchaseId }}</td><td>{{ purchase.date | date:'short' }}</td><td>{{ purchase.status }}</td><td>{{ purchase.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td></tr>} @empty {<tr><td colspan="4">Aún no hay compras registradas.</td></tr>}</tbody></table></div>
     </div></section>
+  }
+  @if (editingProvider; as provider) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editProviderTitle">
+      <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white"><h2 class="modal-title fs-5" id="editProviderTitle">Editar proveedor</h2><button type="button" class="btn-close btn-close-white" aria-label="Cerrar" (click)="cancelEdit()"></button></div>
+        <form [formGroup]="editForm" (ngSubmit)="saveEdit()" novalidate>
+          <div class="modal-body row g-3">
+            <div class="col-md-6"><label class="form-label" for="editProviderName">Razón social</label><input id="editProviderName" class="form-control" formControlName="name"></div>
+            <div class="col-md-6"><label class="form-label" for="editProviderNit">NIT</label><input id="editProviderNit" class="form-control" formControlName="nit"></div>
+            <div class="col-md-6"><label class="form-label" for="editProviderEmail">Correo</label><input id="editProviderEmail" class="form-control" formControlName="email"></div>
+            <div class="col-md-6"><label class="form-label" for="editProviderContact">Contacto</label><input id="editProviderContact" class="form-control" formControlName="contactName"></div>
+            <div class="col-md-6"><label class="form-label" for="editProviderPhone">Teléfono</label><input id="editProviderPhone" class="form-control" formControlName="phone"></div>
+            <div class="col-md-6"><label class="form-label" for="editProviderAddress">Dirección</label><input id="editProviderAddress" class="form-control" formControlName="address"></div>
+            <div class="col-12"><label class="form-label" for="editProviderNotes">Notas</label><textarea id="editProviderNotes" class="form-control" formControlName="notes"></textarea></div>
+            @if (error) { <div class="col-12"><div class="alert alert-danger mb-0" role="alert">{{ error }}</div></div> }
+          </div>
+          <div class="modal-footer"><button class="btn btn-light" type="button" (click)="cancelEdit()">Cancelar</button><button class="btn btn-danger" type="submit">Guardar cambios</button></div>
+        </form>
+      </div></div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
   }
 </div>

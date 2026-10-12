@@ -248,4 +248,8 @@ export class Inventario {
   supplyName(code: string): string {
     return this.supplies().find((supply: Insumo) => supply.code === code)?.name ?? code;
   }
+
+  supplyCount(status: Insumo['status']): number {
+    return this.supplies().filter(supply => supply.status === status).length;
+  }
 }

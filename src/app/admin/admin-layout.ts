@@ -1,6 +1,13 @@
-import { Component } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../servicios/auth.service';
+import { DatabaseService } from '../servicios/database.service';
 
-@Component({ selector: 'app-admin-layout', imports: [RouterLink, RouterLinkActive, RouterOutlet], templateUrl: './admin-layout.html' })
-export class AdminLayout { constructor(readonly auth: AuthService, private readonly router: Router) {} salir(): void { this.auth.logout(); this.router.navigateByUrl('/login'); } }
+@Component({ selector: 'app-admin-layout', imports: [AsyncPipe, RouterLink, RouterLinkActive, RouterOutlet], templateUrl: './admin-layout.html' })
+export class AdminLayout {
+  readonly auth = inject(AuthService);
+  readonly database = inject(DatabaseService);
+  private readonly router = inject(Router);
+  salir(): void { this.auth.logout(); this.router.navigateByUrl('/login'); }
+}

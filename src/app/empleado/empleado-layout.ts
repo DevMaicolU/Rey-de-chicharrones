@@ -3,6 +3,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AsyncPipe } from '@angular/common';
 import { AuthService } from '../servicios/auth.service';
 import { CartService } from '../servicios/cart.service';
+import { DatabaseService } from '../servicios/database.service';
 import { usarImagenRespaldo } from '../util/imagen';
 
 @Component({
@@ -14,9 +15,12 @@ export class EmpleadoLayout {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   readonly cartCount$ = inject(CartService).totalItems$;
+  readonly database = inject(DatabaseService);
+  private readonly cart = inject(CartService);
   readonly manejarErrorImagen = usarImagenRespaldo;
 
   salir(): void {
+    this.cart.limpiarCarrito();
     this.auth.logout();
     this.router.navigateByUrl('/login');
   }
