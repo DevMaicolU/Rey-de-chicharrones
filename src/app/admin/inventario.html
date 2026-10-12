@@ -108,6 +108,8 @@
             </div>
           </div>
         </article>
+      } @empty {
+        <div class="col-12"><div class="alert alert-warning border-0 shadow-sm" role="status">No hay productos registrados. Crea el primer producto desde este formulario.</div></div>
       }
     </div>
   </section>
@@ -188,6 +190,8 @@
                 </div>
               </td>
             </tr>
+          } @empty {
+            <tr><td colspan="9" class="text-center text-secondary py-4">No hay insumos registrados.</td></tr>
           }
         </tbody>
       </table>

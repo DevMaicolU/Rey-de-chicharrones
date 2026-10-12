@@ -33,6 +33,14 @@ describe('NuevoPedido', () => {
     cart = TestBed.inject(CartService);
     db = TestBed.inject(DatabaseService);
     TestBed.inject(AuthService).login('empleado', 'empleado123');
+    db.addProvider({
+      name: 'Proveedor de pruebas',
+      nit: '900000001',
+      contactName: 'Contacto',
+      phone: '3000000000',
+      email: 'proveedor-pruebas@example.com'
+    });
+    db.addInsumo({ code: 'PAN-001', name: 'Pan de prueba', unitOfMeasure: 'unidades' });
     db.addActiveProduct(lomo);
     db.createPurchase({
       providerId: 1, date: new Date().toISOString(), items: [{

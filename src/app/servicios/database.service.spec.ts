@@ -13,6 +13,17 @@ function recargar(): DatabaseService {
   return TestBed.inject(DatabaseService);
 }
 
+function prepararDatosOperativos(db: DatabaseService): void {
+  db.addProvider({
+    name: 'Proveedor de pruebas',
+    nit: '900000001',
+    contactName: 'Contacto',
+    phone: '3000000000',
+    email: 'proveedor-pruebas@example.com'
+  });
+  db.addInsumo({ code: 'PAN-001', name: 'Pan de prueba', unitOfMeasure: 'unidades' });
+}
+
 describe('DatabaseService', () => {
   let db: DatabaseService;
 
@@ -20,6 +31,32 @@ describe('DatabaseService', () => {
     localStorage.clear();
     TestBed.resetTestingModule();
     db = TestBed.inject(DatabaseService);
+    prepararDatosOperativos(db);
+  });
+
+  it('inicia sin productos ni insumos comerciales en un almacenamiento vacío', () => {
+    localStorage.clear();
+    const empty = recargar();
+    expect(empty.activeProducts).toHaveLength(0);
+    expect(empty.supplies).toHaveLength(0);
+    expect(empty.providers).toHaveLength(0);
+  });
+
+  it('limpia semillas históricas conocidas sin borrar relaciones reales', () => {
+    localStorage.setItem('manila-db-v3', JSON.stringify({
+      users: [{ id: 1, username: 'admin', password: 'admin123', role: 'admin', name: 'Administrador' }],
+      supplies: [{ code: 'PAN-001', name: 'Pan de hamburguesa', unitOfMeasure: 'unidades', quantity: 0, minimumQuantity: 20 }],
+      activeProducts: [{
+        id: 'comida-hamburguesa-clasica', name: 'Hamburguesa Clásica', description: 'demo',
+        type: 'Comida', price: 10, recipe: [{ insumoCode: 'PAN-001', quantityNeeded: 1 }]
+      }],
+      providers: [{ id: 1, name: 'Multileches S.A.S.', nit: 'demo', contactName: '', phone: '', email: 'demo@example.com', active: true }],
+      purchases: [], stockMovements: [], orders: []
+    }));
+    const migrated = recargar();
+    expect(migrated.supplies).toHaveLength(0);
+    expect(migrated.activeProducts).toHaveLength(0);
+    expect(migrated.providers).toHaveLength(0);
   });
 
   it('arranca con el admin y el empleado por defecto', () => {
@@ -253,6 +290,7 @@ describe('DatabaseService', () => {
   });
 
   it('impide dependencias históricas y ventas sin stock', () => {
+    db.addInsumo({ code: 'CAR-001', name: 'Carne de prueba', unitOfMeasure: 'gramos' });
     const product = db.addManualProduct({
       name: 'Producto con receta', description: 'Prueba', price: 100,
       type: 'Comida', recipe: [{ insumoCode: 'CAR-001', quantityNeeded: 100 }]

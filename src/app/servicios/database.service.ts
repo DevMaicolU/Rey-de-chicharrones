@@ -143,138 +143,22 @@ const DEFAULT_USERS: User[] = [
   { id: 2, username: 'empleado', password: 'empleado123', role: 'empleado', name: 'Empleado Principal' }
 ];
 
-const DEFAULT_SUPPLIES: Insumo[] = [
-  ...[
-    ['PAN-001', 'Pan de hamburguesa', 'unidades'], ['CAR-001', 'Carne molida', 'gramos'],
-    ['TOM-001', 'Tomate', 'gramos'], ['QUE-001', 'Queso', 'gramos'], ['PAP-001', 'Papas', 'gramos'],
-    ['SAL-001', 'Salchicha', 'unidades'], ['CEB-001', 'Cebolla', 'gramos'], ['ARR-001', 'Arroz', 'gramos'],
-    ['PAS-001', 'Pasta para lasagna', 'gramos'], ['LEC-001', 'Lechuga', 'gramos'], ['LIM-001', 'Zumo de limón', 'mililitros'],
-    ['AGU-001', 'Agua', 'mililitros'], ['AZU-001', 'Azúcar', 'gramos'], ['VOD-001', 'Vodka', 'mililitros'],
-    ['CER-001', 'Cerveza', 'mililitros'], ['TEQ-001', 'Tequila', 'mililitros'], ['VER-001', 'Vermut', 'mililitros'],
-    ['GAS-001', 'Gaseosa', 'mililitros']
-  ].map(([code, name, unitOfMeasure]) => ({
-    code, name, unitOfMeasure: unitOfMeasure as UnitOfMeasure, quantity: 0,
-    status: 'Agotado' as SupplyStatus, averageCost: 0, lastCost: 0, minimumQuantity: 20
-  }))
-];
-
-const DEFAULT_PRODUCTS: ActiveProduct[] = [
-  {
-    id: 'comida-hamburguesa-clasica',
-    name: 'Hamburguesa Clásica',
-    description: 'Hamburguesa con carne, queso, tomate y cebolla.',
-    type: 'Comida',
-    price: 28000,
-    imageUrl: '/Images/Comidas/hamburguesa.jpg',
-    recipe: [{ insumoCode: 'PAN-001', quantityNeeded: 1 }, { insumoCode: 'CAR-001', quantityNeeded: 180 }, { insumoCode: 'QUE-001', quantityNeeded: 30 }, { insumoCode: 'TOM-001', quantityNeeded: 25 }, { insumoCode: 'CEB-001', quantityNeeded: 15 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'comida-perro-caliente',
-    name: 'Perro Caliente',
-    description: 'Pan con salchicha, cebolla y papas.',
-    type: 'Comida',
-    price: 16000,
-    imageUrl: '/Images/Comidas/perro-caliente.jpg',
-    recipe: [{ insumoCode: 'PAN-001', quantityNeeded: 1 }, { insumoCode: 'SAL-001', quantityNeeded: 1 }, { insumoCode: 'CEB-001', quantityNeeded: 20 }, { insumoCode: 'PAP-001', quantityNeeded: 80 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'comida-lomo-saltado',
-    name: 'Lomo Saltado',
-    description: 'Lomo salteado con arroz, tomate, cebolla y papas.',
-    type: 'Comida',
-    price: 32000,
-    imageUrl: '/Images/Comidas/1Lomo Saltado.jpg',
-    recipe: [{ insumoCode: 'CAR-001', quantityNeeded: 220 }, { insumoCode: 'ARR-001', quantityNeeded: 150 }, { insumoCode: 'TOM-001', quantityNeeded: 50 }, { insumoCode: 'CEB-001', quantityNeeded: 40 }, { insumoCode: 'PAP-001', quantityNeeded: 120 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'comida-lasagna',
-    name: 'Lasagna',
-    description: 'Lasagna de pasta, carne, queso y tomate.',
-    type: 'Comida',
-    price: 30000,
-    imageUrl: '/Images/Comidas/lasagna.jpg',
-    recipe: [{ insumoCode: 'PAS-001', quantityNeeded: 180 }, { insumoCode: 'CAR-001', quantityNeeded: 160 }, { insumoCode: 'QUE-001', quantityNeeded: 60 }, { insumoCode: 'TOM-001', quantityNeeded: 80 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'comida-ensalada',
-    name: 'Ensalada',
-    description: 'Ensalada fresca de lechuga, tomate y cebolla.',
-    type: 'Comida',
-    price: 14000,
-    imageUrl: '/Images/Comidas/ensalada.jpg',
-    recipe: [{ insumoCode: 'LEC-001', quantityNeeded: 100 }, { insumoCode: 'TOM-001', quantityNeeded: 60 }, { insumoCode: 'CEB-001', quantityNeeded: 20 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'bebida-limonada',
-    name: 'Limonada',
-    description: 'Limonada natural endulzada.',
-    type: 'Bebida',
-    price: 9000,
-    imageUrl: '/Images/Bebidas/limonada.jpg',
-    recipe: [{ insumoCode: 'LIM-001', quantityNeeded: 80 }, { insumoCode: 'AGU-001', quantityNeeded: 250 }, { insumoCode: 'AZU-001', quantityNeeded: 20 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'bebida-margarita',
-    name: 'Margarita',
-    description: 'Cóctel clásico de tequila y limón.',
-    type: 'Bebida',
-    price: 18000,
-    imageUrl: '/Images/Bebidas/margarita.jpg',
-    recipe: [{ insumoCode: 'TEQ-001', quantityNeeded: 50 }, { insumoCode: 'LIM-001', quantityNeeded: 30 }, { insumoCode: 'AZU-001', quantityNeeded: 10 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'bebida-cerveza',
-    name: 'Cerveza',
-    description: 'Cerveza fría.',
-    type: 'Bebida',
-    price: 8000,
-    imageUrl: '/Images/Bebidas/cerveza.jpg',
-    recipe: [{ insumoCode: 'CER-001', quantityNeeded: 330 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'bebida-old-fashioned',
-    name: 'Old Fashioned',
-    description: 'Cóctel de vermut y cítricos.',
-    type: 'Bebida',
-    price: 22000,
-    imageUrl: '/Images/Bebidas/old-fashioned.jpg',
-    recipe: [{ insumoCode: 'VOD-001', quantityNeeded: 60 }, { insumoCode: 'AZU-001', quantityNeeded: 8 }, { insumoCode: 'LIM-001', quantityNeeded: 10 }],
-    source: 'manual',
-    tax: 0.19
-  },
-  {
-    id: 'bebida-gaseosa',
-    name: 'Gaseosa',
-    description: 'Gaseosa servida fría.',
-    type: 'Bebida',
-    price: 6000,
-    imageUrl: '/Images/Bebidas/gaseosa.jpg',
-    recipe: [{ insumoCode: 'GAS-001', quantityNeeded: 330 }],
-    source: 'manual',
-    tax: 0.19
-  }
-];
-
-const DEFAULT_PROVIDERS: Provider[] = [
-  { id: 1, name: 'Multileches S.A.S.', nit: '900123456-7', contactName: 'Laura Gómez', phone: '3005550101', email: 'compras@multileches.example', address: 'Bogotá', active: true },
-  { id: 2, name: 'Carnes La Central', nit: '901234567-8', contactName: 'Carlos Ruiz', phone: '3005550102', email: 'carnes@example.com', active: true }
-];
+const LEGACY_DEMO_SUPPLIES = new Map([
+  ['PAN-001', 'Pan de hamburguesa'], ['CAR-001', 'Carne molida'], ['TOM-001', 'Tomate'],
+  ['QUE-001', 'Queso'], ['PAP-001', 'Papas'], ['SAL-001', 'Salchicha'], ['CEB-001', 'Cebolla'],
+  ['ARR-001', 'Arroz'], ['PAS-001', 'Pasta para lasagna'], ['LEC-001', 'Lechuga'],
+  ['LIM-001', 'Zumo de limón'], ['AGU-001', 'Agua'], ['AZU-001', 'Azúcar'], ['VOD-001', 'Vodka'],
+  ['CER-001', 'Cerveza'], ['TEQ-001', 'Tequila'], ['VER-001', 'Vermut'], ['GAS-001', 'Gaseosa']
+]);
+const LEGACY_DEMO_PRODUCT_IDS = new Set([
+  'comida-hamburguesa-clasica', 'comida-perro-caliente', 'comida-lomo-saltado',
+  'comida-lasagna', 'comida-ensalada', 'bebida-limonada', 'bebida-margarita',
+  'bebida-cerveza', 'bebida-old-fashioned', 'bebida-gaseosa'
+]);
+const LEGACY_DEMO_PROVIDERS = new Map([
+  [1, 'Multileches S.A.S.'],
+  [2, 'Carnes La Central']
+]);
 
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
@@ -904,9 +788,9 @@ export class DatabaseService {
   private loadState(): PersistedState {
     const fallback: PersistedState = {
       users: DEFAULT_USERS.map(user => ({ ...user })),
-      supplies: DEFAULT_SUPPLIES.map(supply => ({ ...supply })),
-      activeProducts: DEFAULT_PRODUCTS.map(product => ({ ...product, ingredients: [...(product.ingredients ?? [])] })),
-      providers: DEFAULT_PROVIDERS.map(provider => ({ ...provider })),
+      supplies: [],
+      activeProducts: [],
+      providers: [],
       purchases: [],
       stockMovements: [],
       orders: []
@@ -949,15 +833,6 @@ export class DatabaseService {
             })
             .filter((product): product is ActiveProduct => !!product)
         : fallback.activeProducts;
-      const validProductIds = new Set<string>();
-      const validatedProducts = activeProducts.filter(product => {
-        const recipeError = !product.recipe.length
-          ? 'La receta está vacía.'
-          : this.validateRecipeAgainstSupplies(product.recipe, supplies);
-        if (recipeError || validProductIds.has(product.id)) return false;
-        validProductIds.add(product.id);
-        return true;
-      });
       const providers = Array.isArray(saved.providers)
         ? saved.providers
             .map((provider, index): Provider | undefined => {
@@ -984,13 +859,29 @@ export class DatabaseService {
         .filter((purchase): purchase is Purchase => purchase !== undefined) : fallback.purchases;
       const stockMovements = Array.isArray(saved.stockMovements) ? saved.stockMovements.filter((movement): movement is StockMovement => !!movement && typeof movement === 'object' && typeof (movement as StockMovement).supplyCode === 'string' && typeof (movement as StockMovement).reference === 'string') : [];
       const orders = Array.isArray(saved.orders) ? saved.orders.map(order => this.normalizeOrder(order as OrderRecord)).filter((order): order is OrderRecord => !!order) : fallback.orders;
+      const cleaned = this.removeLegacyDemoData(activeProducts, supplies, providers, purchases, stockMovements, orders);
+      const validProductIds = new Set<string>();
+      const validatedProducts = cleaned.activeProducts.filter(product => {
+        const recipeError = !product.recipe.length
+          ? 'La receta está vacía.'
+          : this.validateRecipeAgainstSupplies(product.recipe, cleaned.supplies);
+        if (recipeError || validProductIds.has(product.id)) return false;
+        validProductIds.add(product.id);
+        return true;
+      });
+      for (const supply of cleaned.supplies) {
+        if (supply.preferredProviderId !== undefined &&
+          !cleaned.providers.some(provider => provider.id === supply.preferredProviderId && provider.active)) {
+          supply.preferredProviderId = undefined;
+        }
+      }
 
       const normalizedUsers = users.some(user => user.role === 'admin') ? users : [{ ...DEFAULT_USERS[0] }, ...users.filter(user => user.id !== DEFAULT_USERS[0].id)];
       return {
         users: normalizedUsers,
-        supplies,
+        supplies: cleaned.supplies,
         activeProducts: validatedProducts,
-        providers,
+        providers: cleaned.providers,
         purchases,
         stockMovements,
         orders
@@ -998,6 +889,37 @@ export class DatabaseService {
     } catch {
       return fallback;
     }
+  }
+
+  private removeLegacyDemoData(
+    activeProducts: ActiveProduct[],
+    supplies: Insumo[],
+    providers: Provider[],
+    purchases: Purchase[],
+    stockMovements: StockMovement[],
+    orders: OrderRecord[]
+  ): Pick<PersistedState, 'activeProducts' | 'supplies' | 'providers'> {
+    const referencedSupplyCodes = new Set([
+      ...purchases.flatMap(purchase => purchase.items.map(item => item.supplyCode)),
+      ...stockMovements.map(movement => movement.supplyCode)
+    ]);
+    const referencedProductIds = new Set(orders.flatMap(order => order.products.map(item => item.productId)));
+    const referencedProviderIds = new Set(purchases.map(purchase => purchase.providerId));
+    return {
+      supplies: supplies.filter(supply =>
+        !LEGACY_DEMO_SUPPLIES.has(supply.code) ||
+        LEGACY_DEMO_SUPPLIES.get(supply.code) !== supply.name ||
+        referencedSupplyCodes.has(supply.code)
+      ),
+      activeProducts: activeProducts.filter(product =>
+        !LEGACY_DEMO_PRODUCT_IDS.has(product.id) || referencedProductIds.has(product.id)
+      ),
+      providers: providers.filter(provider =>
+        !LEGACY_DEMO_PROVIDERS.has(provider.id) ||
+        LEGACY_DEMO_PROVIDERS.get(provider.id) !== provider.name ||
+        referencedProviderIds.has(provider.id)
+      )
+    };
   }
 
   private saveState(): void {
