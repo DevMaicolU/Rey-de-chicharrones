@@ -1,8 +1,0 @@
-.product-image-container {
-  height: 200px;
-}
-
-.product-image {
-  object-fit: cover;
-  transition: object-fit 0.2s ease, padding 0.2s ease;
-}
