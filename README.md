@@ -1,8 +1,10 @@
-# ProyectoFinalAngular
+# MANILA — ProyectoFinalAngular
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.3.
+Aplicación Angular para la operación de un restaurante: catálogo de productos, pedidos,
+inventario, proveedores, compras, empleados y reportes. La información operativa se
+persiste en `localStorage` mediante `DatabaseService`.
 
-## Development server
+## Desarrollo
 
 To start a local development server, run:
 
@@ -26,33 +28,40 @@ For a complete list of available schematics (such as `components`, `directives`,
 ng generate --help
 ```
 
-## Building
+## Compilación
 
 To build the project run:
 
 ```bash
-ng build
+npm run build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
-## Running unit tests
+## Pruebas unitarias
 
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
 ```bash
-ng test
+npm test -- --watch=false
 ```
 
-## Running end-to-end tests
+## Flujos principales
 
-For end-to-end (e2e) testing, run:
+- **Administración:** inventario, proveedores, compras, empleados y reportes.
+- **Operación:** catálogo de comidas y bebidas, carrito, cierre de pedido e historial.
+- **Persistencia:** el estado se guarda bajo la clave `manila-db-v3`; las migraciones
+  normalizan identificadores y estados sin eliminar datos existentes.
+- **Compras:** solo proveedores activos pueden asociarse a insumos o nuevas compras.
+  Recibir una compra actualiza existencias y registra el movimiento de kardex una vez.
+- **Inventario:** el estado disponible/escaso/agotado se calcula usando la cantidad y
+  el mínimo configurable de cada insumo.
 
-```bash
-ng e2e
-```
+## End-to-end
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Angular CLI no incluye un framework end-to-end por defecto. Los flujos manuales
+principales se pueden verificar con `ng serve`; si se incorpora un framework E2E,
+debe documentarse aquí su comando y sus datos de prueba.
 
 ## Additional Resources
 
