@@ -1,22 +1,56 @@
 <div class="container">
-  <h1 class="h2 text-danger mb-4">Gestión de Proveedores</h1>
+  <header class="mb-4"><h1 class="h2 text-danger mb-1">Proveedores</h1><p class="text-secondary mb-0">Administra proveedores y consulta sus compras e insumos.</p></header>
   <section class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white"><h2 class="h5 mb-0">Nuevo proveedor</h2></div>
     <div class="card-body">
-      <form class="input-group" (ngSubmit)="add()">
-        <input class="form-control" name="provider" placeholder="Nombre - correo@ejemplo.com" aria-label="Proveedor" autocomplete="off" [(ngModel)]="provider">
-        <button class="btn btn-warning" type="submit">Añadir proveedor</button>
+      <form [formGroup]="providerForm" (ngSubmit)="add()" novalidate>
+        <div class="row g-3">
+          @for (field of [
+            {name: 'name', label: 'Razón social'}, {name: 'nit', label: 'NIT'}, {name: 'contactName', label: 'Contacto'},
+            {name: 'phone', label: 'Teléfono'}, {name: 'email', label: 'Correo'}, {name: 'address', label: 'Dirección'}
+          ]; track field.name) {
+            <div class="col-12 col-md-4"><label class="form-label" [for]="field.name">{{ field.label }}</label><input class="form-control" [id]="field.name" [formControlName]="field.name"></div>
+          }
+          <div class="col-12"><label class="form-label" for="notes">Notas</label><textarea id="notes" class="form-control" formControlName="notes"></textarea></div>
+        </div>
+        @if (error) { <div class="alert alert-danger mt-3 mb-0">{{ error }}</div> }
+        @if (message) { <div class="alert alert-success mt-3 mb-0">{{ message }}</div> }
+        <button class="btn btn-danger mt-3" type="submit">Guardar proveedor</button>
       </form>
-      @if (error) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ error }}</div> }
     </div>
   </section>
-  <div class="list-group shadow-sm">
-    @for (item of providers(); track item) {
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        <span>{{ item }}</span>
-        <button class="btn btn-sm btn-outline-danger" type="button" (click)="remove(item)">Quitar</button>
-      </div>
-    } @empty {
-      <div class="list-group-item text-center text-secondary py-4">No hay proveedores registrados.</div>
-    }
-  </div>
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white"><h2 class="h5 mb-0">Listado de proveedores</h2></div>
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+      <thead class="table-dark"><tr><th>Nombre</th><th>NIT</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>@for (provider of providers(); track provider.id) {
+        <tr><td>{{ provider.name }}</td><td>{{ provider.nit || 'Sin NIT' }}</td><td>{{ provider.contactName || '—' }}</td><td>{{ provider.phone || '—' }}</td><td>{{ provider.email }}</td>
+          <td><span class="badge" [class.text-bg-success]="provider.active" [class.text-bg-secondary]="!provider.active">{{ provider.active ? 'Activo' : 'Inactivo' }}</span></td>
+          <td class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" (click)="select(provider)">Ver detalle</button><button class="btn btn-sm btn-outline-secondary" (click)="edit(provider)">Editar</button><button class="btn btn-sm btn-outline-warning" (click)="toggle(provider)">{{ provider.active ? 'Desactivar' : 'Activar' }}</button><button class="btn btn-sm btn-outline-danger" (click)="remove(provider)">Eliminar</button></td>
+        </tr>
+      } @empty { <tr><td colspan="7" class="text-center text-secondary py-4">Aún no hay proveedores registrados.</td></tr> }</tbody>
+    </table></div>
+  </section>
+  @if (selectedProvider; as provider) {
+    <section class="card border-0 shadow-sm"><div class="card-header bg-white"><h2 class="h5 mb-0">Detalle: {{ provider.name }}</h2></div><div class="card-body">
+      <ul class="nav nav-tabs"><li class="nav-item"><span class="nav-link active">Datos</span></li></ul>
+      @if (editingProvider?.id === provider.id) {
+        <form class="row g-3 mt-1" [formGroup]="editForm" (ngSubmit)="saveEdit()">
+          <div class="col-md-4"><label class="form-label">Razón social</label><input class="form-control" formControlName="name"></div>
+          <div class="col-md-4"><label class="form-label">NIT</label><input class="form-control" formControlName="nit"></div>
+          <div class="col-md-4"><label class="form-label">Correo</label><input class="form-control" formControlName="email"></div>
+          <div class="col-md-4"><label class="form-label">Contacto</label><input class="form-control" formControlName="contactName"></div>
+          <div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" formControlName="phone"></div>
+          <div class="col-md-4"><label class="form-label">Dirección</label><input class="form-control" formControlName="address"></div>
+          <div class="col-12"><label class="form-label">Notas</label><textarea class="form-control" formControlName="notes"></textarea></div>
+          <div class="col-12"><button class="btn btn-danger me-2" type="submit">Guardar cambios</button><button class="btn btn-light" type="button" (click)="cancelEdit()">Cancelar</button></div>
+        </form>
+      }
+      <p class="mt-3 mb-1"><strong>NIT:</strong> {{ provider.nit }} · <strong>Correo:</strong> {{ provider.email }}</p>
+      <hr><h3 class="h6">Insumos que suministra</h3>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Insumo</th><th>Último precio</th><th>Costo unidad base</th></tr></thead><tbody>@for (item of suppliedBy(provider.id); track item.supplyCode) {<tr><td>{{ item.supplyName }}</td><td>{{ item.packageCost | currency:'COP':'symbol-narrow':'1.0-0' }}</td><td>{{ item.costPerBaseUnit | currency:'COP':'symbol-narrow':'1.2-2' }}</td></tr>} @empty {<tr><td colspan="3">Aún no hay compras recibidas.</td></tr>}</tbody></table></div>
+      <hr><h3 class="h6">Historial de compras</h3>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>Fecha</th><th>Estado</th><th>Total</th></tr></thead><tbody>@for (purchase of purchasesFor(provider.id); track purchase.purchaseId) {<tr><td>#{{ purchase.purchaseId }}</td><td>{{ purchase.date | date:'short' }}</td><td>{{ purchase.status }}</td><td>{{ purchase.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td></tr>} @empty {<tr><td colspan="4">Aún no hay compras registradas.</td></tr>}</tbody></table></div>
+    </div></section>
+  }
 </div>

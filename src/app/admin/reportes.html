@@ -60,4 +60,12 @@
       </div>
     </div>
   }
+  <section class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white"><h2 class="h5 mb-0">Compras del periodo</h2></div>
+    <div class="card-body">
+      <div class="row g-3"><div class="col-md-6"><div class="small text-secondary">Total comprado</div><div class="h3 text-danger">{{ totalCompras() | currency:'COP':'symbol-narrow':'1.0-0' }}</div></div><div class="col-md-6"><div class="small text-secondary">Comparación</div><div>Ingresos: <strong>{{ totalIngresos() | currency:'COP':'symbol-narrow':'1.0-0' }}</strong> · Gastos: <strong>{{ totalCompras() | currency:'COP':'symbol-narrow':'1.0-0' }}</strong></div></div></div>
+      <hr><h3 class="h6">Total por proveedor</h3>
+      <ul class="list-group list-group-flush">@for (provider of comprasPorProveedor(); track provider.name) {<li class="list-group-item d-flex justify-content-between px-0"><span>{{ provider.name }}</span><strong>{{ provider.total | currency:'COP':'symbol-narrow':'1.0-0' }}</strong></li>} @empty {<li class="list-group-item px-0 text-secondary">No hay compras recibidas en el periodo.</li>}</ul>
+    </div>
+  </section>
 </div>

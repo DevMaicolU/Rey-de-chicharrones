@@ -3,7 +3,7 @@ import { CartService } from './cart.service';
 import { Product } from '../entidades/modelos';
 
 const crear = (idApi: string, price: number): Product => ({
-  id: idApi, idApi, name: idApi, type: 'Comida', price, imageUrl: null, ingredients: [], status: 'Activo'
+  id: idApi, idApi, name: idApi, description: '', type: 'Comida', price, imageUrl: null, recipe: [], ingredients: [], status: 'Activo'
 });
 
 describe('CartService', () => {

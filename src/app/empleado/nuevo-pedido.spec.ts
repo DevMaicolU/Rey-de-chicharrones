@@ -7,8 +7,8 @@ import { Product } from '../entidades/modelos';
 import { NuevoPedido } from './nuevo-pedido';
 
 const lomo: Product = {
-  id: 'lomo', idApi: 'lomo', name: 'Lomo de prueba', type: 'Comida', price: 28000,
-  imageUrl: null, ingredients: [], status: 'Activo'
+  id: 'lomo', idApi: 'lomo', name: 'Lomo de prueba', description: '', type: 'Comida', price: 28000,
+  imageUrl: null, recipe: [{ insumoCode: 'PAN-001', quantityNeeded: 1 }], ingredients: [], status: 'Activo'
 };
 
 describe('NuevoPedido', () => {
@@ -33,6 +33,14 @@ describe('NuevoPedido', () => {
     cart = TestBed.inject(CartService);
     db = TestBed.inject(DatabaseService);
     TestBed.inject(AuthService).login('empleado', 'empleado123');
+    db.addActiveProduct(lomo);
+    db.createPurchase({
+      providerId: 1, date: new Date().toISOString(), items: [{
+        supplyCode: 'PAN-001', supplyName: '', unitOfMeasure: 'unidades',
+        packages: 10, unitsPerPackage: 1, packageCost: 10,
+        baseQuantity: 0, costPerBaseUnit: 0, subtotal: 0
+      }]
+    }, true);
 
     navegaciones = [];
     const router = TestBed.inject(Router);

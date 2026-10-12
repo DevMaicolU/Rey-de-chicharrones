@@ -1,4 +1,4 @@
-import { CurrencyPipe, TitleCasePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,7 +7,7 @@ import { Product } from '../entidades/modelos';
 
 @Component({
   selector: 'app-inventario',
-  imports: [CurrencyPipe, TitleCasePipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe, ReactiveFormsModule],
   templateUrl: './inventario.html'
 })
 export class Inventario {
@@ -16,6 +16,8 @@ export class Inventario {
 
   readonly products = toSignal(this.database.activeProducts$, { initialValue: this.database.activeProducts });
   readonly supplies = toSignal(this.database.supplies$, { initialValue: this.database.supplies });
+  readonly providers = toSignal(this.database.providers$, { initialValue: this.database.providers });
+  readonly movements = toSignal(this.database.stockMovements$, { initialValue: this.database.stockMovements });
 
   readonly productForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -33,17 +35,18 @@ export class Inventario {
     code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
     name: ['', [Validators.required, Validators.maxLength(100)]],
     unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
-    quantity: [0, [Validators.required, Validators.min(0)]]
+    preferredProviderId: [0]
   });
   readonly editSupplyForm = this.formBuilder.nonNullable.group({
     code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
     name: ['', [Validators.required, Validators.maxLength(100)]],
     unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
-    quantity: [0, [Validators.required, Validators.min(0)]]
+    preferredProviderId: [0]
   });
 
   productError = '';
   productMessage = '';
+  editingProductId: string | null = null;
   supplyError = '';
   supplyMessage = '';
   editSupplyError = '';
@@ -81,7 +84,7 @@ export class Inventario {
     }
 
     const value = this.productForm.getRawValue();
-    const result = this.database.addManualProduct({
+    const input = {
       name: value.name,
       description: value.description,
       price: value.price,
@@ -91,16 +94,47 @@ export class Inventario {
         insumoCode: item.insumoCode,
         quantityNeeded: item.quantityNeeded
       }))
-    });
+    };
+    const result = this.editingProductId
+      ? this.database.updateManualProduct(this.editingProductId, input)
+      : this.database.addManualProduct(input);
 
     if (!result.ok) {
       this.productError = result.error ?? 'No fue posible crear el producto.';
       return;
     }
 
-    this.productMessage = 'Producto creado correctamente.';
+    this.productMessage = this.editingProductId ? 'Producto actualizado correctamente.' : 'Producto creado correctamente.';
+    this.editingProductId = null;
     this.productForm.reset({ name: '', description: '', price: 0, imageUrl: '', type: 'Comida' });
     this.recipeItems.clear();
+  }
+
+  editProduct(product: Product): void {
+    this.editingProductId = product.id;
+    this.productError = '';
+    this.productMessage = '';
+    this.productForm.setValue({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      imageUrl: product.imageUrl ?? '',
+      type: product.type,
+      recipe: []
+    });
+    for (const item of product.recipe) {
+      this.recipeItems.push(this.formBuilder.nonNullable.group({
+        insumoCode: [item.insumoCode, Validators.required],
+        quantityNeeded: [item.quantityNeeded, [Validators.required, Validators.min(0.001)]]
+      }));
+    }
+  }
+
+  cancelProductEdit(): void {
+    this.editingProductId = null;
+    this.productForm.reset({ name: '', description: '', price: 0, imageUrl: '', type: 'Comida' });
+    this.recipeItems.clear();
+    this.productError = '';
   }
 
   createSupply(): void {
@@ -108,7 +142,7 @@ export class Inventario {
     this.supplyMessage = '';
     if (this.supplyForm.invalid) {
       this.supplyForm.markAllAsTouched();
-      this.supplyError = 'Completa el código, nombre, unidad de medida y una cantidad inicial válida.';
+      this.supplyError = 'Completa el código, nombre y unidad de medida.';
       return;
     }
 
@@ -117,7 +151,7 @@ export class Inventario {
       code: value.code,
       name: value.name,
       unitOfMeasure: value.unitOfMeasure,
-      quantity: value.quantity
+      preferredProviderId: value.preferredProviderId || undefined
     });
 
     if (!result.ok) {
@@ -126,7 +160,7 @@ export class Inventario {
     }
 
     this.supplyMessage = 'Insumo creado correctamente.';
-    this.supplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos', quantity: 0 });
+    this.supplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos' });
   }
 
   openEditSupply(supply: Insumo): void {
@@ -136,7 +170,7 @@ export class Inventario {
       code: supply.code,
       name: supply.name,
       unitOfMeasure: supply.unitOfMeasure,
-      quantity: supply.quantity
+      preferredProviderId: supply.preferredProviderId ?? 0
     });
     this.editSupplyModalVisible = true;
   }
@@ -144,7 +178,7 @@ export class Inventario {
   closeEditSupply(): void {
     this.editSupplyModalVisible = false;
     this.editingSupplyCode = null;
-    this.editSupplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos', quantity: 0 });
+    this.editSupplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos' });
   }
 
   saveEditedSupply(): void {
@@ -159,7 +193,7 @@ export class Inventario {
     const result = this.database.updateInsumo(this.editingSupplyCode, {
       name: value.name,
       unitOfMeasure: value.unitOfMeasure,
-      quantity: value.quantity
+      preferredProviderId: value.preferredProviderId || undefined
     });
     if (!result.ok) {
       this.editSupplyError = result.error ?? 'No fue posible actualizar el insumo.';
@@ -195,6 +229,20 @@ export class Inventario {
 
   removeProduct(product: Product): void {
     this.database.removeActiveProduct(product.id);
+  }
+
+  estimatedCost(product: Product): number | null {
+    const costs = product.recipe.map(item => this.supplies().find(supply => supply.code === item.insumoCode)?.averageCost ?? 0);
+    return costs.some(cost => cost <= 0) ? null : product.recipe.reduce((sum, item, index) => sum + item.quantityNeeded * costs[index], 0);
+  }
+
+  estimatedMargin(product: Product): number | null {
+    const cost = this.estimatedCost(product);
+    return cost !== null && product.price > 0 ? product.price - cost : null;
+  }
+
+  recipeUnit(code: string): string {
+    return this.supplies().find(supply => supply.code === code)?.unitOfMeasure ?? '';
   }
 
   supplyName(code: string): string {

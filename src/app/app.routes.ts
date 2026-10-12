@@ -11,6 +11,7 @@ import { Inventario } from './admin/inventario';
 import { Proveedores } from './admin/proveedores';
 import { Empleados } from './admin/empleados';
 import { Reportes } from './admin/reportes';
+import { Compras } from './admin/compras';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -29,6 +30,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'inventario' },
       { path: 'inventario', component: Inventario },
       { path: 'proveedores', component: Proveedores },
+      { path: 'compras', component: Compras },
       { path: 'empleados', component: Empleados },
       { path: 'reportes', component: Reportes }
     ]
