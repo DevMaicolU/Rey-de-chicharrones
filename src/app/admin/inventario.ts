@@ -41,7 +41,8 @@ export class Inventario {
     code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
     name: ['', [Validators.required, Validators.maxLength(100)]],
     unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
-    preferredProviderId: [0]
+    preferredProviderId: [0],
+    minimumQuantity: [20, [Validators.required, Validators.min(0)]]
   });
 
   productError = '';
@@ -170,7 +171,8 @@ export class Inventario {
       code: supply.code,
       name: supply.name,
       unitOfMeasure: supply.unitOfMeasure,
-      preferredProviderId: supply.preferredProviderId ?? 0
+      preferredProviderId: supply.preferredProviderId ?? 0,
+      minimumQuantity: supply.minimumQuantity
     });
     this.editSupplyModalVisible = true;
   }
@@ -193,7 +195,8 @@ export class Inventario {
     const result = this.database.updateInsumo(this.editingSupplyCode, {
       name: value.name,
       unitOfMeasure: value.unitOfMeasure,
-      preferredProviderId: value.preferredProviderId || undefined
+      preferredProviderId: value.preferredProviderId || undefined,
+      minimumQuantity: value.minimumQuantity
     });
     if (!result.ok) {
       this.editSupplyError = result.error ?? 'No fue posible actualizar el insumo.';

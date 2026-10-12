@@ -228,6 +228,10 @@
                   </select>
                 </div>
                 <div class="col-6">
+                  <label class="form-label fw-semibold" for="editSupplyMinimum">Mínimo</label>
+                  <input id="editSupplyMinimum" class="form-control" type="number" min="0" step="0.001" formControlName="minimumQuantity">
+                </div>
+                <div class="col-6">
                   <label class="form-label fw-semibold" for="editSupplyProvider">Proveedor preferido</label>
                   <select id="editSupplyProvider" class="form-select" formControlName="preferredProviderId">
                     <option [ngValue]="0">Sin preferencia</option>

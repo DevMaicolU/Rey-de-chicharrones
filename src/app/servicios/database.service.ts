@@ -405,7 +405,7 @@ export class DatabaseService {
 
   updateInsumo(
     code: string,
-    changes: Partial<Pick<Insumo, 'name' | 'unitOfMeasure' | 'preferredProviderId'>>
+    changes: Partial<Pick<Insumo, 'name' | 'unitOfMeasure' | 'preferredProviderId' | 'minimumQuantity'>>
   ): Resultado {
     const normalizedCode = code.trim().toUpperCase();
     const current = this.supplies.find(supply => supply.code === normalizedCode);
@@ -414,7 +414,8 @@ export class DatabaseService {
     }
     const nextName = changes.name?.trim() ?? current.name;
     const nextUnit = changes.unitOfMeasure ?? current.unitOfMeasure;
-    if (!nextName || !['gramos', 'unidades', 'mililitros'].includes(nextUnit)) {
+    const nextMinimum = changes.minimumQuantity ?? current.minimumQuantity;
+    if (!nextName || !['gramos', 'unidades', 'mililitros'].includes(nextUnit) || !Number.isFinite(nextMinimum) || nextMinimum < 0) {
       return { ok: false, error: 'Los datos del insumo no son válidos.' };
     }
     const preferredProviderId = changes.preferredProviderId === undefined
@@ -427,6 +428,7 @@ export class DatabaseService {
         ...supply,
         name: nextName,
         unitOfMeasure: nextUnit,
+        minimumQuantity: nextMinimum,
         preferredProviderId
       })
       : supply));

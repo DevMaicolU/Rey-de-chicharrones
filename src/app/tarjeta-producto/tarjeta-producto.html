@@ -10,11 +10,11 @@
     <p class="small text-secondary flex-grow-1 mb-3">{{ producto.description }}</p>
     <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
       <span class="fw-bold fs-5 text-danger">{{ producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-      <span class="badge rounded-pill text-bg-light">Disponible</span>
+      <span class="badge rounded-pill" [class.text-bg-success]="disponible" [class.text-bg-secondary]="!disponible">{{ disponible ? 'Disponible' : 'Agotado' }}</span>
     </div>
     <div class="input-group">
       <input class="form-control text-center" type="number" min="1" step="1" [(ngModel)]="cantidad" aria-label="Cantidad">
-      <button class="btn btn-danger rounded-pill px-4" type="button" [disabled]="!cantidadValida" (click)="agregarAlCarrito()">Agregar</button>
+      <button class="btn btn-danger rounded-pill px-4" type="button" [disabled]="!cantidadValida || !disponible" (click)="agregarAlCarrito()">{{ disponible ? 'Agregar' : 'No disponible' }}</button>
     </div>
   </div>
 </article>
