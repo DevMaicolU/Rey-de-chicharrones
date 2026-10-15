@@ -1,64 +1,234 @@
 <div class="container">
-  <header class="mb-4"><h1 class="h2 text-danger mb-1">Proveedores</h1><p class="text-secondary mb-0">Administra proveedores y consulta sus compras e insumos.</p></header>
+  <header class="mb-4">
+    <h1 class="h2 text-danger fw-bold mb-1">Proveedores</h1>
+    <p class="text-secondary mb-0">Administra proveedores y consulta sus compras e insumos.</p>
+  </header>
+
   <section class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white"><h2 class="h5 mb-0">Nuevo proveedor</h2></div>
+    <div class="card-header bg-white">
+      <h2 class="h5 text-danger fw-bold mb-0">Nuevo proveedor</h2>
+    </div>
     <div class="card-body">
       <form [formGroup]="providerForm" (ngSubmit)="add()" novalidate>
         <div class="row g-3">
           @for (field of [
-            {name: 'name', label: 'Razón social'}, {name: 'nit', label: 'NIT'}, {name: 'contactName', label: 'Contacto'},
-            {name: 'phone', label: 'Teléfono'}, {name: 'email', label: 'Correo'}, {name: 'address', label: 'Dirección'}
+            {name: 'name', label: 'Razón social', placeholder: 'Ej: Distribuidora Avícola'},
+            {name: 'nit', label: 'NIT', placeholder: 'Ej: 900.123.456-7'},
+            {name: 'contactName', label: 'Contacto', placeholder: 'Ej: Carlos Ruiz'},
+            {name: 'phone', label: 'Teléfono', placeholder: 'Ej: 300 123 4567'},
+            {name: 'email', label: 'Correo', placeholder: 'Ej: contacto@empresa.com'},
+            {name: 'address', label: 'Dirección', placeholder: 'Ej: Calle 45 # 12-34'}
           ]; track field.name) {
-            <div class="col-12 col-md-4"><label class="form-label" [for]="field.name">{{ field.label }}</label><input class="form-control" [id]="field.name" [formControlName]="field.name"></div>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" [for]="field.name">{{ field.label }}</label>
+              <input class="form-control" [id]="field.name" [formControlName]="field.name" [placeholder]="field.placeholder">
+            </div>
           }
-          <div class="col-12"><label class="form-label" for="notes">Notas</label><textarea id="notes" class="form-control" formControlName="notes"></textarea></div>
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="notes">Notas</label>
+            <textarea id="notes" class="form-control" rows="2" formControlName="notes" placeholder="Notas adicionales sobre el proveedor..."></textarea>
+          </div>
         </div>
-        @if (error) { <div class="alert alert-danger mt-3 mb-0">{{ error }}</div> }
-        @if (message) { <div class="alert alert-success mt-3 mb-0">{{ message }}</div> }
-        <button class="btn btn-danger mt-3" type="submit">Guardar proveedor</button>
+        @if (error) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div> }
+        @if (message) { <div class="alert alert-success mt-3 mb-0" role="status">{{ message }}</div> }
+        <button class="btn btn-danger fw-bold mt-3" type="submit">Guardar proveedor</button>
       </form>
     </div>
   </section>
+
   <section class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white"><h2 class="h5 mb-0">Listado de proveedores</h2></div>
-    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
-      <thead class="table-dark"><tr><th>Nombre</th><th>NIT</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody>@for (provider of providers(); track provider.id) {
-        <tr><td>{{ provider.name }}</td><td>{{ provider.nit || 'Sin NIT' }}</td><td>{{ provider.contactName || '—' }}</td><td>{{ provider.phone || '—' }}</td><td>{{ provider.email }}</td>
-          <td><span class="badge" [class.text-bg-success]="provider.active" [class.text-bg-secondary]="!provider.active">{{ provider.active ? 'Activo' : 'Inactivo' }}</span></td>
-          <td class="d-flex gap-1"><button class="btn btn-sm btn-outline-primary" (click)="select(provider)">Ver detalle</button><button class="btn btn-sm btn-outline-secondary" (click)="edit(provider)">Editar</button><button class="btn btn-sm btn-outline-warning" (click)="toggle(provider)">{{ provider.active ? 'Desactivar' : 'Activar' }}</button><button class="btn btn-sm btn-outline-danger" (click)="remove(provider)">Eliminar</button></td>
-        </tr>
-      } @empty { <tr><td colspan="7" class="text-center text-secondary py-4">Aún no hay proveedores registrados.</td></tr> }</tbody>
-    </table></div>
+    <div class="card-header bg-white">
+      <h2 class="h5 text-danger fw-bold mb-0">Listado de proveedores</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Nombre</th>
+            <th>NIT</th>
+            <th>Contacto</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (provider of providers(); track provider.id) {
+            <tr>
+              <td class="fw-bold">{{ provider.name }}</td>
+              <td>{{ provider.nit || 'Sin NIT' }}</td>
+              <td>{{ provider.contactName || '—' }}</td>
+              <td>{{ provider.phone || '—' }}</td>
+              <td>{{ provider.email }}</td>
+              <td>
+                <span class="badge" [class.text-bg-success]="provider.active" [class.text-bg-secondary]="!provider.active">
+                  {{ provider.active ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="d-inline-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary fw-semibold" type="button" (click)="select(provider)">Ver detalle</button>
+                  <button class="btn btn-sm btn-outline-secondary fw-semibold" type="button" (click)="edit(provider)">Editar</button>
+                  <button class="btn btn-sm btn-outline-warning fw-semibold" type="button" (click)="toggle(provider)">
+                    {{ provider.active ? 'Desactivar' : 'Activar' }}
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger fw-semibold" type="button" (click)="openDeleteModal(provider)">
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center text-secondary py-4">Aún no hay proveedores registrados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </section>
+
+  <!-- Detalle de Proveedor con Botón de Cierre -->
   @if (selectedProvider; as provider) {
-    <section class="card border-0 shadow-sm"><div class="card-header bg-white"><h2 class="h5 mb-0">Detalle: {{ provider.name }}</h2></div><div class="card-body">
-      <ul class="nav nav-tabs"><li class="nav-item"><span class="nav-link active">Datos</span></li></ul>
-      <p class="mt-3 mb-1"><strong>NIT:</strong> {{ provider.nit }} · <strong>Correo:</strong> {{ provider.email }}</p>
-      <hr><h3 class="h6">Insumos que suministra</h3>
-      <div class="table-responsive"><table class="table table-sm"><thead><tr>      <th>Insumo</th><th>Costo unitario</th><th>Costo por unidad base</th></tr></thead><tbody>@for (item of suppliedBy(provider.id); track item.supplyCode) {<tr><td>{{ item.supplyName }}</td><td>{{ item.packageCost | currency:'COP':'symbol-narrow':'1.0-0' }}</td><td>{{ item.costPerBaseUnit | currency:'COP':'symbol-narrow':'1.2-2' }}</td></tr>} @empty {<tr><td colspan="3">Aún no hay compras recibidas.</td></tr>}</tbody></table></div>
-      <hr><h3 class="h6">Historial de compras</h3>
-      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>Fecha</th><th>Estado</th><th>Total</th></tr></thead><tbody>@for (purchase of purchasesFor(provider.id); track purchase.purchaseId) {<tr><td>#{{ purchase.purchaseId }}</td><td>{{ purchase.date | date:'short' }}</td><td>{{ purchase.status }}</td><td>{{ purchase.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td></tr>} @empty {<tr><td colspan="4">Aún no hay compras registradas.</td></tr>}</tbody></table></div>
-    </div></section>
+    <section class="card border-0 shadow-sm mb-4 animate__animated animate__fadeIn">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h2 class="h5 text-danger fw-bold mb-0">Detalle: {{ provider.name }}</h2>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1"
+          (click)="closeDetail()"
+          aria-label="Cerrar detalle de proveedor"
+          title="Cerrar detalle"
+        >
+          <span>✕</span> Cerrar
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="p-3 bg-light rounded-3 border mb-3">
+          <div class="row g-2">
+            <div class="col-md-3"><strong>NIT:</strong> {{ provider.nit || '—' }}</div>
+            <div class="col-md-3"><strong>Contacto:</strong> {{ provider.contactName || '—' }}</div>
+            <div class="col-md-3"><strong>Teléfono:</strong> {{ provider.phone || '—' }}</div>
+            <div class="col-md-3"><strong>Correo:</strong> {{ provider.email }}</div>
+            @if (provider.address) {
+              <div class="col-12 mt-2"><strong>Dirección:</strong> {{ provider.address }}</div>
+            }
+          </div>
+        </div>
+
+        <h3 class="h6 text-danger fw-bold mb-2">Insumos que suministra</h3>
+        <div class="table-responsive mb-4">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Insumo</th>
+                <th class="text-end">Costo unitario</th>
+                <th class="text-end">Costo por unidad base</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of suppliedBy(provider.id); track item.supplyCode) {
+                <tr>
+                  <td class="fw-semibold">{{ item.supplyName }}</td>
+                  <td class="text-end text-danger fw-bold">{{ item.packageCost | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                  <td class="text-end text-secondary">{{ item.costPerBaseUnit | currency:'COP':'symbol-narrow':'1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="3" class="text-center text-secondary py-3">Aún no hay compras recibidas de este proveedor.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="h6 text-danger fw-bold mb-2">Historial de compras</h3>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Nº</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (purchase of purchasesFor(provider.id); track purchase.purchaseId) {
+                <tr>
+                  <td class="fw-bold">#{{ purchase.purchaseId }}</td>
+                  <td>{{ purchase.date | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <span class="badge" [class.text-bg-success]="purchase.status === 'recibida'" [class.text-bg-warning]="purchase.status === 'pedida'" [class.text-bg-secondary]="purchase.status === 'anulada'">
+                      {{ purchase.status }}
+                    </span>
+                  </td>
+                  <td class="text-end fw-bold text-danger">{{ purchase.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="text-center text-secondary py-3">Aún no hay compras registradas para este proveedor.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   }
+
+  <!-- Modal: Editar Proveedor -->
   @if (editingProvider; as provider) {
     <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editProviderTitle">
-      <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
-        <div class="modal-header bg-danger text-white"><h2 class="modal-title fs-5" id="editProviderTitle">Editar proveedor</h2><button type="button" class="btn-close btn-close-white" aria-label="Cerrar" (click)="cancelEdit()"></button></div>
-        <form [formGroup]="editForm" (ngSubmit)="saveEdit()" novalidate>
-          <div class="modal-body row g-3">
-            <div class="col-md-6"><label class="form-label" for="editProviderName">Razón social</label><input id="editProviderName" class="form-control" formControlName="name"></div>
-            <div class="col-md-6"><label class="form-label" for="editProviderNit">NIT</label><input id="editProviderNit" class="form-control" formControlName="nit"></div>
-            <div class="col-md-6"><label class="form-label" for="editProviderEmail">Correo</label><input id="editProviderEmail" class="form-control" formControlName="email"></div>
-            <div class="col-md-6"><label class="form-label" for="editProviderContact">Contacto</label><input id="editProviderContact" class="form-control" formControlName="contactName"></div>
-            <div class="col-md-6"><label class="form-label" for="editProviderPhone">Teléfono</label><input id="editProviderPhone" class="form-control" formControlName="phone"></div>
-            <div class="col-md-6"><label class="form-label" for="editProviderAddress">Dirección</label><input id="editProviderAddress" class="form-control" formControlName="address"></div>
-            <div class="col-12"><label class="form-label" for="editProviderNotes">Notas</label><textarea id="editProviderNotes" class="form-control" formControlName="notes"></textarea></div>
-            @if (error) { <div class="col-12"><div class="alert alert-danger mb-0" role="alert">{{ error }}</div></div> }
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5 fw-bold" id="editProviderTitle">Editar proveedor</h2>
+            <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" (click)="cancelEdit()"></button>
           </div>
-          <div class="modal-footer"><button class="btn btn-light" type="button" (click)="cancelEdit()">Cancelar</button><button class="btn btn-danger" type="submit">Guardar cambios</button></div>
-        </form>
-      </div></div>
+          <form [formGroup]="editForm" (ngSubmit)="saveEdit()" novalidate>
+            <div class="modal-body row g-3">
+              <div class="col-md-6"><label class="form-label fw-semibold" for="editProviderName">Razón social</label><input id="editProviderName" class="form-control" formControlName="name"></div>
+              <div class="col-md-6"><label class="form-label fw-semibold" for="editProviderNit">NIT</label><input id="editProviderNit" class="form-control" formControlName="nit"></div>
+              <div class="col-md-6"><label class="form-label fw-semibold" for="editProviderEmail">Correo</label><input id="editProviderEmail" class="form-control" formControlName="email"></div>
+              <div class="col-md-6"><label class="form-label fw-semibold" for="editProviderContact">Contacto</label><input id="editProviderContact" class="form-control" formControlName="contactName"></div>
+              <div class="col-md-6"><label class="form-label fw-semibold" for="editProviderPhone">Teléfono</label><input id="editProviderPhone" class="form-control" formControlName="phone"></div>
+              <div class="col-md-6"><label class="form-label fw-semibold" for="editProviderAddress">Dirección</label><input id="editProviderAddress" class="form-control" formControlName="address"></div>
+              <div class="col-12"><label class="form-label fw-semibold" for="editProviderNotes">Notas</label><textarea id="editProviderNotes" class="form-control" rows="2" formControlName="notes"></textarea></div>
+              @if (error) { <div class="col-12"><div class="alert alert-danger mb-0" role="alert">{{ error }}</div></div> }
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light px-4" type="button" (click)="cancelEdit()">Cancelar</button>
+              <button class="btn btn-danger fw-bold px-4" type="submit">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
+
+  <!-- Modal: Confirmar Eliminación de Proveedor -->
+  @if (deleteModalVisible && providerToDelete) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="deleteProviderTitle">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5 fw-bold" id="deleteProviderTitle">Eliminar proveedor</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeDeleteModal()"></button>
+          </div>
+          <div class="modal-body text-center py-4">
+            <p class="mb-1">¿Estás seguro de eliminar al proveedor?</p>
+            <p class="fw-bold text-danger mb-0 fs-6">{{ providerToDelete.name }}</p>
+            <p class="text-secondary small mt-2 mb-0">Esta acción no se puede deshacer.</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button class="btn btn-light px-3" type="button" (click)="closeDeleteModal()">Cancelar</button>
+            <button class="btn btn-danger fw-bold px-3" type="button" (click)="confirmDelete()">Sí, eliminar</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-backdrop fade show"></div>
   }

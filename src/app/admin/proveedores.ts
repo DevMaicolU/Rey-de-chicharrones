@@ -4,25 +4,46 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatabaseService, Provider } from '../servicios/database.service';
 
-@Component({ selector: 'app-proveedores', imports: [ReactiveFormsModule, CurrencyPipe, DatePipe], templateUrl: './proveedores.html' })
+@Component({
+  selector: 'app-proveedores',
+  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe],
+  templateUrl: './proveedores.html'
+})
 export class Proveedores {
   private readonly database = inject(DatabaseService);
   private readonly formBuilder = inject(FormBuilder);
+
   readonly providers = toSignal(this.database.providers$, { initialValue: this.database.providers });
   readonly purchases = toSignal(this.database.purchases$, { initialValue: this.database.purchases });
+
   readonly providerForm = this.formBuilder.nonNullable.group({
-    name: ['', Validators.required], nit: ['', Validators.required], contactName: [''],
-    phone: [''], email: ['', [Validators.required, Validators.email]], address: [''], notes: ['']
+    name: ['', Validators.required],
+    nit: ['', Validators.required],
+    contactName: [''],
+    phone: [''],
+    email: ['', [Validators.required, Validators.email]],
+    address: [''],
+    notes: ['']
   });
+
   readonly editForm = this.formBuilder.nonNullable.group({
-    name: ['', Validators.required], nit: ['', Validators.required], contactName: [''],
-    phone: [''], email: ['', [Validators.required, Validators.email]], address: [''], notes: ['']
+    name: ['', Validators.required],
+    nit: ['', Validators.required],
+    contactName: [''],
+    phone: [''],
+    email: ['', [Validators.required, Validators.email]],
+    address: [''],
+    notes: ['']
   });
 
   error = '';
   message = '';
   selectedProvider: Provider | null = null;
   editingProvider: Provider | null = null;
+
+  // Modal de confirmación para eliminar proveedor
+  providerToDelete: Provider | null = null;
+  deleteModalVisible = false;
 
   add(): void {
     const resultado = this.database.addProvider(this.providerForm.getRawValue());
@@ -31,15 +52,31 @@ export class Proveedores {
     if (resultado.ok) this.providerForm.reset();
   }
 
-  select(provider: Provider): void { this.selectedProvider = provider; }
+  select(provider: Provider): void {
+    this.selectedProvider = provider;
+  }
+
+  closeDetail(): void {
+    this.selectedProvider = null;
+  }
+
   edit(provider: Provider): void {
     this.editingProvider = provider;
     this.editForm.setValue({
-      name: provider.name, nit: provider.nit, contactName: provider.contactName,
-      phone: provider.phone, email: provider.email, address: provider.address ?? '', notes: provider.notes ?? ''
+      name: provider.name,
+      nit: provider.nit,
+      contactName: provider.contactName,
+      phone: provider.phone,
+      email: provider.email,
+      address: provider.address ?? '',
+      notes: provider.notes ?? ''
     });
   }
-  cancelEdit(): void { this.editingProvider = null; }
+
+  cancelEdit(): void {
+    this.editingProvider = null;
+  }
+
   saveEdit(): void {
     if (!this.editingProvider || this.editForm.invalid) {
       this.editForm.markAllAsTouched();
@@ -55,12 +92,41 @@ export class Proveedores {
       this.selectedProvider = this.database.providers.find(item => item.id === providerId) ?? this.selectedProvider;
     }
   }
-  purchasesFor(providerId: number) { return this.database.purchasesByProvider(providerId); }
-  suppliedBy(providerId: number) { return this.database.suppliesOfProvider(providerId); }
-  toggle(provider: Provider): void { this.database.setProviderActive(provider.id, !provider.active); }
-  remove(provider: Provider): void {
-    if (!window.confirm(`¿Estás seguro de eliminar al proveedor "${provider.name}"? Esta acción no se puede deshacer.`)) return;
-    const result = this.database.deleteProvider(provider.id);
+
+  purchasesFor(providerId: number) {
+    return this.database.purchasesByProvider(providerId);
+  }
+
+  suppliedBy(providerId: number) {
+    return this.database.suppliesOfProvider(providerId);
+  }
+
+  toggle(provider: Provider): void {
+    this.database.setProviderActive(provider.id, !provider.active);
+  }
+
+  openDeleteModal(provider: Provider): void {
+    this.providerToDelete = provider;
+    this.deleteModalVisible = true;
+  }
+
+  closeDeleteModal(): void {
+    this.providerToDelete = null;
+    this.deleteModalVisible = false;
+  }
+
+  confirmDelete(): void {
+    if (!this.providerToDelete) return;
+    const result = this.database.deleteProvider(this.providerToDelete.id);
     this.error = result.error ?? '';
+    this.message = result.ok ? 'Proveedor eliminado correctamente.' : '';
+    this.closeDeleteModal();
+    if (this.selectedProvider?.id === this.providerToDelete?.id) {
+      this.selectedProvider = null;
+    }
+  }
+
+  remove(provider: Provider): void {
+    this.openDeleteModal(provider);
   }
 }

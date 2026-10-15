@@ -31,12 +31,12 @@
             <input id="productPrice" class="form-control" type="number" min="1" formControlName="price" placeholder="Ej: 15000" required>
           </div>
           <div class="col-12">
-            <label class="form-label" for="productDescription">Descripción corta</label>
-            <textarea id="productDescription" class="form-control" rows="2" formControlName="description" placeholder="Describe brevemente el plato o bebida." required></textarea>
+            <label class="form-label fw-semibold" for="productDescription">Descripción corta (opcional)</label>
+            <textarea id="productDescription" class="form-control" rows="2" formControlName="description" placeholder="Describe brevemente el plato o bebida (opcional)."></textarea>
           </div>
           <div class="col-12">
-            <label class="form-label" for="productImageUrl">URL de imagen (opcional)</label>
-            <input id="productImageUrl" class="form-control" formControlName="imageUrl" placeholder="https://... o ruta local">
+            <label class="form-label fw-semibold" for="productImageUrl">URL de imagen (obligatoria) <span class="text-danger">*</span></label>
+            <input id="productImageUrl" class="form-control" formControlName="imageUrl" placeholder="https://... o ruta de imagen" required>
             @if (productForm.get('imageUrl')?.value) {
               <div class="mt-2 d-flex align-items-center gap-2">
                 <span class="small text-secondary">Vista previa:</span>
@@ -353,7 +353,7 @@
       <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow">
           <div class="modal-header bg-danger text-white">
-            <h2 class="modal-title fs-5" id="deleteSupplyTitle">Eliminar insumo</h2>
+            <h2 class="modal-title fs-5 fw-bold" id="deleteSupplyTitle">Eliminar insumo</h2>
             <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeDeleteSupply()"></button>
           </div>
           <div class="modal-body text-center py-4">
@@ -364,7 +364,31 @@
           </div>
           <div class="modal-footer justify-content-center">
             <button class="btn btn-light" type="button" (click)="closeDeleteSupply()">Cancelar</button>
-            <button class="btn btn-danger" type="button" (click)="confirmDeleteSupply()">Sí, eliminar</button>
+            <button class="btn btn-danger fw-bold" type="button" (click)="confirmDeleteSupply()">Sí, eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
+
+  <!-- ===== MODAL: ELIMINAR PRODUCTO ===== -->
+  @if (deleteProductModalVisible && deletingProduct; as prod) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="deleteProductTitle">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5 fw-bold" id="deleteProductTitle">Eliminar producto</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeDeleteProduct()"></button>
+          </div>
+          <div class="modal-body text-center py-4">
+            <p class="mb-1">¿Estás seguro de eliminar el producto?</p>
+            <p class="fw-bold text-danger mb-0 fs-6">{{ prod.name }}</p>
+            <p class="small text-secondary mt-2 mb-0">Se retirará permanentemente del menú activo para los empleados.</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button class="btn btn-light px-3" type="button" (click)="closeDeleteProduct()">Cancelar</button>
+            <button class="btn btn-danger fw-bold px-3" type="button" (click)="confirmDeleteProduct()">Sí, eliminar</button>
           </div>
         </div>
       </div>

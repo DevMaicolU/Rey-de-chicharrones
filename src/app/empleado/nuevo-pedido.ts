@@ -178,6 +178,22 @@ export class NuevoPedido {
       return;
     }
 
+    const pedidoMesaExistente = this.pedidosEspera.buscarPedidoEnCursoPorMesa(mesa);
+    if (pedidoMesaExistente) {
+      const estado = this.etiquetaEstado(pedidoMesaExistente.estado);
+      this.error = `Ya existe un pedido en curso para la Mesa ${mesa} (${estado}, cliente: ${pedidoMesaExistente.cliente}). No se pueden registrar pedidos simultáneos para la misma mesa.`;
+      this.toast.advertencia(this.error);
+      return;
+    }
+
+    const pedidoCedulaExistente = this.pedidosEspera.buscarPedidoEnCursoPorCedula(this.customerCedula.trim());
+    if (pedidoCedulaExistente) {
+      const estado = this.etiquetaEstado(pedidoCedulaExistente.estado);
+      this.error = `El cliente con cédula ${this.customerCedula.trim()} ya tiene un pedido en curso en la Mesa ${pedidoCedulaExistente.mesa} (${estado}). No se pueden registrar pedidos simultáneos con la misma cédula.`;
+      this.toast.advertencia(this.error);
+      return;
+    }
+
     const resultadoDescuento = this.database.descontarStockPorPedido(
       cartItems,
       `Pedido Mesa #${mesa} - ${this.customerName.trim()}`

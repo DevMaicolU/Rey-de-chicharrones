@@ -108,4 +108,15 @@ export class PedidosEnEsperaService {
   buscar(id: string): PedidoEnEspera | undefined {
     return this.pedidos.find(p => p.id === id);
   }
+
+  buscarPedidoEnCursoPorMesa(mesa: number): PedidoEnEspera | undefined {
+    return this.pedidos.find(p => p.mesa === mesa);
+  }
+
+  buscarPedidoEnCursoPorCedula(cedula: string): PedidoEnEspera | undefined {
+    const clean = cedula.trim();
+    if (!clean) return undefined;
+    return this.pedidos.find(p => p.cedulaCliente.trim() === clean);
+  }
 }
+

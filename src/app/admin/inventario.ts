@@ -25,11 +25,12 @@ export class Inventario {
     usarImagenRespaldo(event);
   }
 
+  // Imagen OBLIGATORIA, Descripción OPCIONAL
   readonly productForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
-    description: ['', [Validators.required, Validators.maxLength(500)]],
+    description: ['', [Validators.maxLength(500)]],
     price: [0, [Validators.required, Validators.min(1)]],
-    imageUrl: [''],
+    imageUrl: ['', [Validators.required]],
     type: ['Comida' as Product['type'], Validators.required],
     recipe: this.formBuilder.array<FormGroup<{
       insumoCode: FormControl<string>;
@@ -43,6 +44,7 @@ export class Inventario {
     unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
     preferredProviderId: [0]
   });
+
   readonly editSupplyForm = this.formBuilder.nonNullable.group({
     code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
     name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -54,6 +56,11 @@ export class Inventario {
   productError = '';
   productMessage = '';
   editingProductId: string | null = null;
+
+  // Modal para eliminar producto (sin window.confirm)
+  deletingProduct: Product | null = null;
+  deleteProductModalVisible = false;
+
   supplyError = '';
   supplyMessage = '';
   editSupplyError = '';
@@ -84,24 +91,36 @@ export class Inventario {
   createProduct(): void {
     this.productError = '';
     this.productMessage = '';
+
+    const value = this.productForm.getRawValue();
+    if (!value.name.trim()) {
+      this.productForm.markAllAsTouched();
+      this.productError = 'El nombre del producto es obligatorio.';
+      return;
+    }
+    if (!value.imageUrl.trim()) {
+      this.productForm.markAllAsTouched();
+      this.productError = 'La imagen del producto es obligatoria. Por favor ingresa una URL de imagen válida.';
+      return;
+    }
     if (this.productForm.invalid || !this.recipeItems.length) {
       this.productForm.markAllAsTouched();
-      this.productError = 'Completa los datos del producto y agrega al menos un insumo a la receta.';
+      this.productError = 'Completa los campos obligatorios del producto (nombre, precio, imagen) y agrega al menos un insumo a la receta.';
       return;
     }
 
-    const value = this.productForm.getRawValue();
     const input = {
-      name: value.name,
-      description: value.description,
+      name: value.name.trim(),
+      description: value.description.trim(),
       price: value.price,
-      imageUrl: value.imageUrl || null,
+      imageUrl: value.imageUrl.trim(),
       type: value.type,
       recipe: value.recipe.map(item => ({
         insumoCode: item.insumoCode,
         quantityNeeded: item.quantityNeeded
       }))
     };
+
     const result = this.editingProductId
       ? this.database.updateManualProduct(this.editingProductId, input)
       : this.database.addManualProduct(input);
@@ -121,9 +140,10 @@ export class Inventario {
     this.editingProductId = product.id;
     this.productError = '';
     this.productMessage = '';
+    this.recipeItems.clear();
     this.productForm.setValue({
       name: product.name,
-      description: product.description,
+      description: product.description || '',
       price: product.price,
       imageUrl: product.imageUrl ?? '',
       type: product.type,
@@ -144,6 +164,27 @@ export class Inventario {
     this.productError = '';
   }
 
+  openDeleteProduct(product: Product): void {
+    this.deletingProduct = product;
+    this.deleteProductModalVisible = true;
+  }
+
+  closeDeleteProduct(): void {
+    this.deletingProduct = null;
+    this.deleteProductModalVisible = false;
+  }
+
+  confirmDeleteProduct(): void {
+    if (!this.deletingProduct) return;
+    this.database.removeActiveProduct(this.deletingProduct.id);
+    this.productMessage = `Producto "${this.deletingProduct.name}" eliminado del menú activo.`;
+    this.closeDeleteProduct();
+  }
+
+  removeProduct(product: Product): void {
+    this.openDeleteProduct(product);
+  }
+
   createSupply(): void {
     this.supplyError = '';
     this.supplyMessage = '';
@@ -158,7 +199,7 @@ export class Inventario {
       code: value.code,
       name: value.name,
       unitOfMeasure: value.unitOfMeasure,
-      preferredProviderId: value.preferredProviderId || undefined
+      preferredProviderId: value.preferredProviderId ? Number(value.preferredProviderId) : undefined
     });
 
     if (!result.ok) {
@@ -166,8 +207,8 @@ export class Inventario {
       return;
     }
 
-    this.supplyMessage = 'Insumo creado correctamente.';
-    this.supplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos' });
+    this.supplyMessage = 'Insumo registrado correctamente.';
+    this.supplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos', preferredProviderId: 0 });
   }
 
   openEditSupply(supply: Insumo): void {
@@ -184,26 +225,27 @@ export class Inventario {
   }
 
   closeEditSupply(): void {
-    this.editSupplyModalVisible = false;
     this.editingSupplyCode = null;
-    this.editSupplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos' });
+    this.editSupplyModalVisible = false;
   }
 
-  saveEditedSupply(): void {
+  updateSupply(): void {
+    if (!this.editingSupplyCode) return;
     this.editSupplyError = '';
-    if (!this.editingSupplyCode || this.editSupplyForm.invalid) {
+    if (this.editSupplyForm.invalid) {
       this.editSupplyForm.markAllAsTouched();
-      this.editSupplyError = 'Completa los datos del insumo con valores válidos.';
+      this.editSupplyError = 'Completa los datos obligatorios del insumo.';
       return;
     }
 
     const value = this.editSupplyForm.getRawValue();
-    const result = this.database.updateInsumo(this.editingSupplyCode, {
+    const result = this.database.updateSupply(this.editingSupplyCode, {
       name: value.name,
       unitOfMeasure: value.unitOfMeasure,
-      preferredProviderId: value.preferredProviderId || undefined,
+      preferredProviderId: value.preferredProviderId ? Number(value.preferredProviderId) : undefined,
       minimumQuantity: value.minimumQuantity
     });
+
     if (!result.ok) {
       this.editSupplyError = result.error ?? 'No fue posible actualizar el insumo.';
       return;
@@ -213,6 +255,10 @@ export class Inventario {
     this.closeEditSupply();
   }
 
+  saveEditedSupply(): void {
+    this.updateSupply();
+  }
+
   openDeleteSupply(supply: Insumo): void {
     this.deletingSupply = supply;
     this.deleteSupplyError = '';
@@ -220,13 +266,14 @@ export class Inventario {
   }
 
   closeDeleteSupply(): void {
-    this.deleteSupplyModalVisible = false;
     this.deletingSupply = null;
+    this.deleteSupplyModalVisible = false;
   }
 
   confirmDeleteSupply(): void {
     if (!this.deletingSupply) return;
-    const result = this.database.deleteInsumo(this.deletingSupply.code);
+    this.deleteSupplyError = '';
+    const result = this.database.deleteSupply(this.deletingSupply.code);
     if (!result.ok) {
       this.deleteSupplyError = result.error ?? 'No fue posible eliminar el insumo.';
       return;
@@ -235,12 +282,6 @@ export class Inventario {
     this.supplyMessage = 'Insumo eliminado correctamente.';
     this.closeDeleteSupply();
   }
-
-  removeProduct(product: Product): void {
-    if (!window.confirm(`¿Estás seguro de eliminar "${product.name}"? Se retirará del menú activo.`)) return;
-    this.database.removeActiveProduct(product.id);
-  }
-
 
   recipeUnit(code: string): string {
     return this.supplies().find(supply => supply.code === code)?.unitOfMeasure ?? '';

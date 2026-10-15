@@ -364,7 +364,44 @@ describe('NuevoPedido', () => {
     expect(componente.mostrarDropdownMenu).toBe(false);
     dummyElement.remove();
   });
+
+  it('impide registrar pedidos simultáneos en curso para la misma mesa o la misma cédula', () => {
+    const componente = fixture.componentInstance;
+    const cart = TestBed.inject(CartService);
+
+    // Preparar carrito con producto
+    const lomo = db.activeProducts.find(p => p.name.includes('Lomo'))!;
+    cart.agregarAlCarrito(lomo, 1);
+
+    // Registrar primer pedido para Mesa 12 con cédula 12345678
+    componente.tableNumber = 12;
+    componente.customerName = 'Roberto';
+    componente.customerCedula = '12345678';
+    componente.registrarPedido();
+    expect(componente.error).toBe('');
+
+    const pedidoActivo = componente.pedidosEnEspera().find(p => p.mesa === 12);
+    expect(pedidoActivo).toBeDefined();
+
+    // Intentar registrar otro pedido para la misma Mesa 12 (distinto cliente)
+    cart.agregarAlCarrito(lomo, 1);
+    componente.tableNumber = 12;
+    componente.customerName = 'Elena';
+    componente.customerCedula = '87654321';
+    componente.registrarPedido();
+
+    expect(componente.error).toContain('Ya existe un pedido en curso para la Mesa 12');
+
+    // Intentar registrar un pedido con la misma cédula 12345678 en otra Mesa 15
+    componente.tableNumber = 15;
+    componente.customerName = 'Roberto';
+    componente.customerCedula = '12345678';
+    componente.registrarPedido();
+
+    expect(componente.error).toContain('ya tiene un pedido en curso en la Mesa 12');
+  });
 });
+
 
 
 

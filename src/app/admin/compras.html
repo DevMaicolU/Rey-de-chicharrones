@@ -1,44 +1,191 @@
 <div class="container">
-  <header class="mb-4"><h1 class="h2 text-danger mb-1">Compras</h1><p class="text-secondary mb-0">Registra pedidos y compras recibidas para actualizar el inventario.</p></header>
-  <section class="card border-0 shadow-sm mb-4"><div class="card-header bg-white"><h2 class="h5 mb-0">Nueva compra</h2></div><div class="card-body">
-    <form [formGroup]="form" novalidate>
-      <div class="row g-3 mb-3"><div class="col-md-4"><label class="form-label">Proveedor</label><select class="form-select" formControlName="providerId"><option [ngValue]="0">Selecciona un proveedor</option>@for (provider of providers(); track provider.id) { @if (provider.active) {<option [ngValue]="provider.id">{{ provider.name }}</option>} }</select></div><div class="col-md-4"><label class="form-label">Fecha</label><input class="form-control" type="date" formControlName="date"></div><div class="col-md-4"><label class="form-label">Factura/remisión</label><input class="form-control" formControlName="invoiceNumber"></div><div class="col-12"><label class="form-label">Notas</label><textarea class="form-control" formControlName="notes"></textarea></div></div>
-      <div formArrayName="items">
-        <div class="d-flex justify-content-between mb-2">
-          <h3 class="h6">Detalle de abastecimiento</h3>
-          <button class="btn btn-sm btn-outline-danger" type="button" (click)="addLine()">Agregar línea</button>
-        </div>
-        @for (line of lines.controls; track $index) {
-          <div class="row g-2 align-items-end mb-2" [formGroupName]="$index">
-            <div class="col-md-4">
-              <label class="form-label small">Insumo</label>
-              <select class="form-select" formControlName="supplyCode">
-                <option value="">Selecciona</option>
-                @for (supply of supplies(); track supply.code) {
-                  <option [value]="supply.code">{{ supply.name }}</option>
+  <header class="mb-4">
+    <h1 class="h2 text-danger fw-bold mb-1">Compras</h1>
+    <p class="text-secondary mb-0">Registra pedidos y compras recibidas para actualizar el inventario.</p>
+  </header>
+
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white">
+      <h2 class="h5 text-danger fw-bold mb-0">Nueva compra</h2>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="form" novalidate>
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="purchaseProviderSelect">Proveedor</label>
+            <select id="purchaseProviderSelect" class="form-select" formControlName="providerId">
+              <option [ngValue]="0">Selecciona un proveedor</option>
+              @for (provider of providers(); track provider.id) {
+                @if (provider.active) {
+                  <option [ngValue]="provider.id">{{ provider.name }}</option>
                 }
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label small">Cantidad</label>
-              <input class="form-control" type="number" step="0.001" formControlName="packages">
-            </div>
-            <div class="col-md-2">
-              <label class="form-label small">Contenido por unidad@if (unit(line.get('supplyCode')?.value); as u) { ({{ u }})}</label>
-              <input class="form-control" type="number" step="0.001" formControlName="unitsPerPackage">
-            </div>
-            <div class="col-md-2">
-              <label class="form-label small">Costo unitario</label>
-              <input class="form-control" type="number" step="0.01" formControlName="packageCost">
-            </div>
-            <div class="col-md-1 text-end">{{ lineTotal($index) | currency:'COP':'symbol-narrow':'1.0-0' }}</div>
-            <div class="col-md-1"><button class="btn btn-outline-secondary" type="button" (click)="removeLine($index)">Quitar</button></div>
+              }
+            </select>
           </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="purchaseDateInput">Fecha</label>
+            <input id="purchaseDateInput" class="form-control" type="date" formControlName="date">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="purchaseInvoiceInput">Factura/remisión</label>
+            <input id="purchaseInvoiceInput" class="form-control" formControlName="invoiceNumber" placeholder="Ej: FAC-1029">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="purchaseNotesInput">Notas</label>
+            <textarea id="purchaseNotesInput" class="form-control" rows="2" formControlName="notes" placeholder="Observaciones adicionales sobre la compra..."></textarea>
+          </div>
+        </div>
+
+        <div class="border-top pt-3 mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h6 text-danger fw-bold mb-0">Detalle de abastecimiento</h3>
+            <button class="btn btn-sm btn-outline-danger fw-semibold" type="button" (click)="addLine()">
+              + Agregar línea
+            </button>
+          </div>
+
+          @for (line of lines.controls; track line; let i = $index) {
+            <div class="row g-2 align-items-end mb-3 p-2 bg-light rounded-3 border" [formGroup]="$any(line)">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Insumo</label>
+                <select class="form-select" formControlName="supplyCode">
+                  <option value="">Selecciona un insumo</option>
+                  @for (supply of supplies(); track supply.code) {
+                    <option [value]="supply.code">{{ supply.name }} ({{ supply.unitOfMeasure }})</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small fw-semibold">Cantidad</label>
+                <input class="form-control" type="number" min="0.001" step="0.001" formControlName="packages">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small fw-semibold">
+                  Contenido por unidad@if (unit(line.get('supplyCode')?.value); as u) { ({{ u }})}
+                </label>
+                <input class="form-control" type="number" min="0.001" step="0.001" formControlName="unitsPerPackage">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small fw-semibold">Costo unitario ($)</label>
+                <input class="form-control" type="number" min="0" step="100" formControlName="packageCost">
+              </div>
+              <div class="col-md-1 text-end fw-bold text-danger pb-2">
+                {{ lineTotal(line) | currency:'COP':'symbol-narrow':'1.0-0' }}
+              </div>
+              <div class="col-md-1 pb-1 text-end">
+                <button
+                  class="btn btn-outline-secondary btn-sm w-100"
+                  type="button"
+                  [disabled]="lines.length <= 1"
+                  (click)="removeLine(i)"
+                  title="Quitar línea"
+                >
+                  Quitar
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-2 border-top">
+          <div class="h5 mb-0 fw-bold">
+            Total compra: <span class="text-danger">{{ total() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div>
+            <button class="btn btn-outline-danger me-2 fw-semibold" type="button" (click)="save(false)">
+              Guardar como pedido
+            </button>
+            <button class="btn btn-danger fw-bold" type="button" (click)="save(true)">
+              Registrar compra recibida
+            </button>
+          </div>
+        </div>
+
+        @if (error) {
+          <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div>
         }
-      </div>
-      <div class="d-flex justify-content-between align-items-center mt-4"><strong>Total: {{ total() | currency:'COP':'symbol-narrow':'1.0-0' }}</strong><div><button class="btn btn-outline-danger me-2" type="button" (click)="save(false)">Guardar como pedido</button><button class="btn btn-danger" type="button" (click)="save(true)">Registrar compra recibida</button></div></div>
-      @if (error) {<div class="alert alert-danger mt-3 mb-0">{{ error }}</div>} @if (message) {<div class="alert alert-success mt-3 mb-0">{{ message }}</div>}
-    </form>
-  </div></section>
-  <section class="card border-0 shadow-sm"><div class="card-header bg-white"><h2 class="h5 mb-0">Historial de compras</h2></div><div class="table-responsive"><table class="table table-hover mb-0"><thead class="table-dark"><tr><th>Nº</th><th>Fecha</th><th>Proveedor</th><th>Factura</th><th>Estado</th><th>Total</th><th>Acciones</th></tr></thead><tbody>@for (purchase of purchases(); track purchase.purchaseId) {<tr><td>#{{ purchase.purchaseId }}</td><td>{{ purchase.date | date:'shortDate' }}</td><td>{{ purchase.providerName }}</td><td>{{ purchase.invoiceNumber || '—' }}</td><td>{{ purchase.status }}</td><td>{{ purchase.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td><td>@if (purchase.status === 'pedida') {<button class="btn btn-sm btn-outline-success me-1" type="button" (click)="receive(purchase.purchaseId)">Recibir</button><button class="btn btn-sm btn-outline-danger" type="button" (click)="cancel(purchase.purchaseId)">Anular</button>} @else {—}</td></tr>} @empty {<tr><td colspan="7" class="text-center text-secondary py-4">Aún no hay compras registradas.</td></tr>}</tbody></table></div></section>
+        @if (message) {
+          <div class="alert alert-success mt-3 mb-0" role="status">{{ message }}</div>
+        }
+      </form>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+      <h2 class="h5 text-danger fw-bold mb-0">Historial de compras</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Nº</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Factura</th>
+            <th>Estado</th>
+            <th class="text-end">Total</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (purchase of purchases(); track purchase.purchaseId) {
+            <tr>
+              <td class="fw-bold">#{{ purchase.purchaseId }}</td>
+              <td>{{ purchase.date | date:'dd/MM/yyyy' }}</td>
+              <td class="fw-semibold">{{ purchase.providerName }}</td>
+              <td>{{ purchase.invoiceNumber || '—' }}</td>
+              <td>
+                <span class="badge" [class.text-bg-success]="purchase.status === 'recibida'" [class.text-bg-warning]="purchase.status === 'pedida'" [class.text-bg-secondary]="purchase.status === 'anulada'">
+                  {{ purchase.status }}
+                </span>
+              </td>
+              <td class="text-end fw-bold text-danger">{{ purchase.total | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+              <td class="text-center">
+                @if (purchase.status === 'pedida') {
+                  <button class="btn btn-sm btn-outline-success me-1 fw-semibold" type="button" (click)="openReceiveConfirm(purchase.purchaseId)">
+                    Recibir
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger fw-semibold" type="button" (click)="openCancelConfirm(purchase.purchaseId)">
+                    Anular
+                  </button>
+                } @else {
+                  <span class="text-secondary small">—</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center text-secondary py-4">Aún no hay compras registradas.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
+
+<!-- Modal de confirmación integrado (sin window.confirm) -->
+@if (purchaseModal) {
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="purchaseModalTitle">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header bg-danger text-white">
+          <h2 class="modal-title fs-5 fw-bold" id="purchaseModalTitle">{{ purchaseModal.title }}</h2>
+          <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closePurchaseModal()"></button>
+        </div>
+        <div class="modal-body py-4 text-center">
+          <p class="mb-2">{{ purchaseModal.message }}</p>
+          <strong class="text-danger fs-6">Compra #{{ purchaseModal.purchaseId }}</strong>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button class="btn btn-light px-4" type="button" (click)="closePurchaseModal()">Cancelar</button>
+          <button class="btn px-4 fw-bold {{ purchaseModal.confirmClass }}" type="button" (click)="confirmPurchaseAction()">
+            {{ purchaseModal.confirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
