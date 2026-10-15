@@ -112,6 +112,7 @@ export interface VentaInput {
   items: OrderItem[];
   paymentMethod: PaymentMethod;
   applyDiscount: boolean;
+  stockAlreadyDeducted?: boolean;
 }
 
 export interface VentaResultado extends Resultado {
@@ -197,6 +198,33 @@ export class DatabaseService {
   get purchases(): Purchase[] { return this.purchasesSubject.value; }
   get stockMovements(): StockMovement[] { return this.stockMovementsSubject.value; }
   get orders(): OrderRecord[] { return this.ordersSubject.value; }
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY) {
+          this.syncFromStorage();
+        }
+      });
+    }
+  }
+
+  syncFromStorage(): void {
+    if (typeof localStorage === 'undefined') return;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const state = this.loadState();
+      this.suppliesSubject.next(state.supplies);
+      this.activeProductsSubject.next(state.activeProducts);
+      this.providersSubject.next(state.providers);
+      this.purchasesSubject.next(state.purchases);
+      this.stockMovementsSubject.next(state.stockMovements);
+      this.ordersSubject.next(state.orders);
+    } catch {
+      // ignore
+    }
+  }
 
   getProviderById(providerId: number): Provider | undefined {
     const id = this.normalizeProviderId(providerId);
@@ -516,30 +544,35 @@ export class DatabaseService {
 
     const invoice = this.facturacion.calculate(validatedItems, input.applyDiscount);
 
-    for (const [insumoCode, quantityNeeded] of consumption) {
-      const supply = this.supplies.find(item => item.code === insumoCode);
-      if (!supply) {
-        return { ok: false, error: `El insumo "${insumoCode}" de la receta no existe.` };
+    if (!input.stockAlreadyDeducted) {
+      for (const [insumoCode, quantityNeeded] of consumption) {
+        const supply = this.supplies.find(item => item.code === insumoCode);
+        if (!supply) {
+          return { ok: false, error: `El insumo "${insumoCode}" de la receta no existe.` };
+        }
+        if (!Number.isFinite(supply.quantity) || supply.quantity < 0 || supply.quantity < quantityNeeded) {
+          return { ok: false, error: `No hay inventario suficiente de "${supply.name}".` };
+        }
       }
-      if (!Number.isFinite(supply.quantity) || supply.quantity < 0 || supply.quantity < quantityNeeded) {
-        return { ok: false, error: `No hay inventario suficiente de "${supply.name}".` };
-      }
+
+      const saleDate = new Date().toISOString();
+      const stockEntries = [...consumption.entries()].map(([supplyCode, quantity], index) => ({
+        id: this.nextId(this.stockMovements) + index,
+        date: saleDate,
+        supplyCode,
+        type: 'venta' as const,
+        quantity: -quantity,
+        reference: `Pedido #${this.nextId(this.orders) + 1}`
+      }));
+
+      const nextSupplies = this.supplies.map(supply => {
+        const quantityNeeded = consumption.get(supply.code) ?? 0;
+        return quantityNeeded > 0 ? this.withSupplyStatus({ ...supply, quantity: supply.quantity - quantityNeeded }) : supply;
+      });
+
+      this.suppliesSubject.next(nextSupplies);
+      this.stockMovementsSubject.next([...this.stockMovements, ...stockEntries]);
     }
-
-    const updatedSupplies = this.supplies.map(supply => {
-      const quantityNeeded = consumption.get(supply.code) ?? 0;
-      return quantityNeeded > 0 ? this.withSupplyStatus({ ...supply, quantity: supply.quantity - quantityNeeded }) : supply;
-    });
-
-    const saleDate = new Date().toISOString();
-    const stockEntries = [...consumption.entries()].map(([supplyCode, quantity], index) => ({
-      id: this.nextId(this.stockMovements) + index,
-      date: saleDate,
-      supplyCode,
-      type: 'venta' as const,
-      quantity: -quantity,
-      reference: `Pedido #${this.nextId(this.orders) + 1}`
-    }));
 
     // En una operación de dominio coherente, primero se validan los datos y luego se confirma el estado completo.
     const order = this.persistOrder({
@@ -557,16 +590,199 @@ export class DatabaseService {
       discount: invoice.discount
     });
 
+    this.saveState();
+
+    return { ok: true, invoice, order };
+  }
+
+  /**
+   * Descuenta de manera atómica el inventario requerido por un pedido.
+   * Si no hay existencias de algún insumo, aborta completamente sin alterar el stock.
+   */
+  descontarStockPorPedido(
+    items: Array<{ producto?: Product; cantidad?: number; productId?: string; quantity?: number }>,
+    referencia: string
+  ): Resultado {
+    this.syncFromStorage();
+    if (!Array.isArray(items) || items.length === 0) {
+      return { ok: false, error: 'El pedido no contiene productos.' };
+    }
+
+    const consumption = new Map<string, number>();
+    for (const raw of items) {
+      const product = raw.producto ?? this.activeProducts.find(p => p.id === raw.productId || p.idApi === raw.productId);
+      const quantity = raw.cantidad ?? raw.quantity;
+
+      if (!product || !quantity || !Number.isInteger(quantity) || quantity <= 0) {
+        return { ok: false, error: 'Cantidad o producto inválido en el pedido.' };
+      }
+      if (!product.recipe || !product.recipe.length) {
+        return { ok: false, error: `El producto "${product.name}" no tiene una receta de insumos válida.` };
+      }
+
+      for (const recipeItem of product.recipe) {
+        if (!recipeItem.insumoCode || !Number.isFinite(recipeItem.quantityNeeded) || recipeItem.quantityNeeded <= 0) {
+          return { ok: false, error: `La receta de "${product.name}" contiene datos inválidos.` };
+        }
+        const needed = recipeItem.quantityNeeded * quantity;
+        consumption.set(recipeItem.insumoCode, (consumption.get(recipeItem.insumoCode) ?? 0) + needed);
+      }
+    }
+
+    // 1. Validación previa completa: Ningún insumo se descuenta si alguno no tiene suficiente
+    for (const [insumoCode, quantityNeeded] of consumption) {
+      const supply = this.supplies.find(s => s.code === insumoCode);
+      if (!supply) {
+        return { ok: false, error: `El insumo requerido "${insumoCode}" no existe en el catálogo.` };
+      }
+      if (!Number.isFinite(supply.quantity) || supply.quantity < quantityNeeded) {
+        return {
+          ok: false,
+          error: `No hay inventario suficiente de "${supply.name}". Disponible: ${Math.max(0, supply.quantity)} ${supply.unitOfMeasure}, Requerido: ${quantityNeeded} ${supply.unitOfMeasure}.`
+        };
+      }
+    }
+
+    // 2. Descuento atómico de existencias y registro en Kardex
+    const now = new Date().toISOString();
     const nextSupplies = this.supplies.map(supply => {
-      const quantityNeeded = consumption.get(supply.code) ?? 0;
-      return quantityNeeded > 0 ? this.withSupplyStatus({ ...supply, quantity: supply.quantity - quantityNeeded }) : supply;
+      const needed = consumption.get(supply.code) ?? 0;
+      return needed > 0 ? this.withSupplyStatus({ ...supply, quantity: supply.quantity - needed }) : supply;
     });
+
+    const stockEntries: StockMovement[] = [...consumption.entries()].map(([supplyCode, quantity], index) => ({
+      id: this.nextId(this.stockMovements) + index,
+      date: now,
+      supplyCode,
+      type: 'venta' as const,
+      quantity: -quantity,
+      reference: referencia
+    }));
 
     this.suppliesSubject.next(nextSupplies);
     this.stockMovementsSubject.next([...this.stockMovements, ...stockEntries]);
     this.saveState();
 
-    return { ok: true, invoice, order };
+    return { ok: true };
+  }
+
+  /**
+   * Restaura el inventario cuando un pedido en espera es cancelado.
+   */
+  restaurarStockPorPedido(
+    items: Array<{ producto?: Product; cantidad?: number; productId?: string; quantity?: number }>,
+    referencia: string
+  ): Resultado {
+    this.syncFromStorage();
+    if (!Array.isArray(items) || items.length === 0) return { ok: true };
+
+    const consumption = new Map<string, number>();
+    for (const raw of items) {
+      const product = raw.producto ?? this.activeProducts.find(p => p.id === raw.productId || p.idApi === raw.productId);
+      const quantity = raw.cantidad ?? raw.quantity;
+      if (!product || !quantity || !Number.isInteger(quantity) || quantity <= 0 || !product.recipe) continue;
+
+      for (const recipeItem of product.recipe) {
+        const needed = recipeItem.quantityNeeded * quantity;
+        consumption.set(recipeItem.insumoCode, (consumption.get(recipeItem.insumoCode) ?? 0) + needed);
+      }
+    }
+
+    if (!consumption.size) return { ok: true };
+
+    const now = new Date().toISOString();
+    const nextSupplies = this.supplies.map(supply => {
+      const restored = consumption.get(supply.code) ?? 0;
+      return restored > 0 ? this.withSupplyStatus({ ...supply, quantity: supply.quantity + restored }) : supply;
+    });
+
+    const stockEntries: StockMovement[] = [...consumption.entries()].map(([supplyCode, quantity], index) => ({
+      id: this.nextId(this.stockMovements) + index,
+      date: now,
+      supplyCode,
+      type: 'ajuste' as const,
+      quantity: quantity,
+      reference: referencia
+    }));
+
+    this.suppliesSubject.next(nextSupplies);
+    this.stockMovementsSubject.next([...this.stockMovements, ...stockEntries]);
+    this.saveState();
+    return { ok: true };
+  }
+
+  /**
+   * Ajusta las existencias cuando un pedido en espera es editado (aumento o reducción de cantidades).
+   */
+  ajustarStockPorEdicionPedido(
+    itemsAnteriores: Array<{ producto?: Product; cantidad?: number; productId?: string; quantity?: number }>,
+    itemsNuevos: Array<{ producto?: Product; cantidad?: number; productId?: string; quantity?: number }>,
+    referencia: string
+  ): Resultado {
+    this.syncFromStorage();
+    const getConsumption = (itemsList: Array<{ producto?: Product; cantidad?: number; productId?: string; quantity?: number }>) => {
+      const map = new Map<string, number>();
+      for (const raw of itemsList) {
+        const product = raw.producto ?? this.activeProducts.find(p => p.id === raw.productId || p.idApi === raw.productId);
+        const quantity = raw.cantidad ?? raw.quantity;
+        if (!product || !quantity || !Number.isInteger(quantity) || quantity <= 0 || !product.recipe) continue;
+        for (const recipeItem of product.recipe) {
+          const needed = recipeItem.quantityNeeded * quantity;
+          map.set(recipeItem.insumoCode, (map.get(recipeItem.insumoCode) ?? 0) + needed);
+        }
+      }
+      return map;
+    };
+
+    const consumoAnterior = getConsumption(itemsAnteriores);
+    const consumoNuevo = getConsumption(itemsNuevos);
+    const allCodes = new Set([...consumoAnterior.keys(), ...consumoNuevo.keys()]);
+    const differences = new Map<string, number>();
+
+    for (const code of allCodes) {
+      const diff = (consumoNuevo.get(code) ?? 0) - (consumoAnterior.get(code) ?? 0);
+      if (diff !== 0) differences.set(code, diff);
+    }
+
+    // Validar si los incrementos (diff > 0) pueden ser cubiertos por el stock actual
+    for (const [code, diff] of differences) {
+      if (diff > 0) {
+        const supply = this.supplies.find(s => s.code === code);
+        if (!supply) return { ok: false, error: `El insumo "${code}" no existe.` };
+        if (supply.quantity < diff) {
+          return {
+            ok: false,
+            error: `No hay inventario suficiente de "${supply.name}". Faltan ${diff - supply.quantity} ${supply.unitOfMeasure} para cubrir el cambio.`
+          };
+        }
+      }
+    }
+
+    // Aplicar diferencias
+    const now = new Date().toISOString();
+    const nextSupplies = this.supplies.map(supply => {
+      const diff = differences.get(supply.code) ?? 0;
+      return diff !== 0 ? this.withSupplyStatus({ ...supply, quantity: supply.quantity - diff }) : supply;
+    });
+
+    const stockEntries: StockMovement[] = [];
+    for (const [supplyCode, diff] of differences) {
+      stockEntries.push({
+        id: this.nextId(this.stockMovements) + stockEntries.length,
+        date: now,
+        supplyCode,
+        type: diff > 0 ? 'venta' : 'ajuste',
+        quantity: -diff,
+        reference: referencia
+      });
+    }
+
+    this.suppliesSubject.next(nextSupplies);
+    if (stockEntries.length) {
+      this.stockMovementsSubject.next([...this.stockMovements, ...stockEntries]);
+    }
+    this.saveState();
+    return { ok: true };
   }
 
   /** Comprueba el inventario disponible para preparar un producto sin mutar el estado. */

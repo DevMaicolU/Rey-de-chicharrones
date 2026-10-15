@@ -18,11 +18,42 @@ export interface PedidoEnEspera {
   empleadoNombre: string;
 }
 
+const STORAGE_KEY_ESPERA = 'royalsoft-pedidos-espera-v1';
+
 @Injectable({ providedIn: 'root' })
 export class PedidosEnEsperaService {
   private readonly auth = inject(AuthService);
-  private readonly pedidosSubject = new BehaviorSubject<PedidoEnEspera[]>([]);
+  private readonly pedidosSubject = new BehaviorSubject<PedidoEnEspera[]>(this.cargarStorage());
   readonly pedidos$ = this.pedidosSubject.asObservable();
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY_ESPERA) {
+          this.pedidosSubject.next(this.cargarStorage());
+        }
+      });
+    }
+  }
+
+  private cargarStorage(): PedidoEnEspera[] {
+    if (typeof localStorage === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_ESPERA);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private guardarStorage(pedidos: PedidoEnEspera[]): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_KEY_ESPERA, JSON.stringify(pedidos));
+    } catch {
+      // ignore
+    }
+  }
 
   get pedidos(): PedidoEnEspera[] { return this.pedidosSubject.value; }
 
@@ -46,24 +77,32 @@ export class PedidosEnEsperaService {
       empleadoId: empleado.id,
       empleadoNombre: empleado.name
     };
-    this.pedidosSubject.next([pedido, ...this.pedidos]);
+    const nuevos = [pedido, ...this.pedidos];
+    this.pedidosSubject.next(nuevos);
+    this.guardarStorage(nuevos);
     return pedido;
   }
 
   actualizarItems(id: string, items: CartItem[]): void {
-    this.pedidosSubject.next(this.pedidos.map(p =>
+    const actualizados = this.pedidos.map(p =>
       p.id === id
         ? { ...p, items: items.map(i => ({ ...i })), total: items.reduce((s, i) => s + i.subtotal, 0) }
         : p
-    ));
+    );
+    this.pedidosSubject.next(actualizados);
+    this.guardarStorage(actualizados);
   }
 
   actualizarEstado(id: string, estado: EstadoPedidoEnEspera): void {
-    this.pedidosSubject.next(this.pedidos.map(p => p.id === id ? { ...p, estado } : p));
+    const actualizados = this.pedidos.map(p => p.id === id ? { ...p, estado } : p);
+    this.pedidosSubject.next(actualizados);
+    this.guardarStorage(actualizados);
   }
 
   eliminar(id: string): void {
-    this.pedidosSubject.next(this.pedidos.filter(p => p.id !== id));
+    const actualizados = this.pedidos.filter(p => p.id !== id);
+    this.pedidosSubject.next(actualizados);
+    this.guardarStorage(actualizados);
   }
 
   buscar(id: string): PedidoEnEspera | undefined {

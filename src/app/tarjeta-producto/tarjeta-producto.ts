@@ -1,5 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CartService } from '../servicios/cart.service';
 import { DatabaseService } from '../servicios/database.service';
@@ -21,9 +22,12 @@ export class TarjetaProducto {
   private readonly database = inject(DatabaseService);
   private readonly toast = inject(ToastService);
 
+  readonly supplies = toSignal(this.database.supplies$, { initialValue: this.database.supplies });
+
   get disponible(): boolean {
+    const suppliesList = this.supplies();
     return this.producto.recipe.every(recipeItem => {
-      const supply = this.database.supplies.find(item => item.code === recipeItem.insumoCode);
+      const supply = suppliesList.find(item => item.code === recipeItem.insumoCode);
       return !!supply && supply.quantity >= recipeItem.quantityNeeded;
     });
   }
@@ -32,6 +36,7 @@ export class TarjetaProducto {
   get stockSuficiente(): boolean {
     const cant = this.cantidad ?? 1;
     const reservado = this.cart.items.find(item => item.producto.id === this.producto.id)?.cantidad ?? 0;
+    this.supplies();
     return this.database.stockSuficiente(this.producto, cant, reservado);
   }
 

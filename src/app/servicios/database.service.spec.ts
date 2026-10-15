@@ -313,4 +313,78 @@ describe('DatabaseService', () => {
     expect(sale.ok).toBe(false);
     expect(db.orders).toHaveLength(0);
   });
+
+  it('descuenta automáticamente el stock de insumos al registrar un pedido y bloquea pedidos posteriores si se agota', () => {
+    // Escenario solicitado: 5 hamburguesas disponibles en inventario
+    db.addInsumo({ code: 'HAM-PAN', name: 'Pan de hamburguesa', unitOfMeasure: 'unidades' });
+    db.createPurchase({
+      providerId: 1, date: new Date().toISOString(), items: [{
+        supplyCode: 'HAM-PAN', supplyName: '', unitOfMeasure: 'unidades',
+        packages: 5, unitsPerPackage: 1, packageCost: 1000,
+        baseQuantity: 0, costPerBaseUnit: 0, subtotal: 0
+      }]
+    }, true);
+
+    const hamburguesa = db.addManualProduct({
+      name: 'Hamburguesa común', description: 'Hamburguesa rica', price: 15000,
+      type: 'Comida', recipe: [{ insumoCode: 'HAM-PAN', quantityNeeded: 1 }]
+    });
+    expect(hamburguesa.ok).toBe(true);
+
+    const panInsumo = () => db.supplies.find(s => s.code === 'HAM-PAN')?.quantity;
+    expect(panInsumo()).toBe(5);
+
+    // Empleado 1 registra la compra de 5 hamburguesas
+    const pedido1 = db.descontarStockPorPedido(
+      [{ producto: hamburguesa.product!, cantidad: 5 }],
+      'Pedido Mesa #1'
+    );
+    expect(pedido1.ok).toBe(true);
+    // El stock debe actualizarse inmediatamente a 0
+    expect(panInsumo()).toBe(0);
+
+    // Empleado 2 intenta registrar compra de 5 hamburguesas: el sistema DEBE impedir la operación
+    const pedido2 = db.descontarStockPorPedido(
+      [{ producto: hamburguesa.product!, cantidad: 5 }],
+      'Pedido Mesa #2'
+    );
+    expect(pedido2.ok).toBe(false);
+    expect(pedido2.error).toContain('No hay inventario suficiente');
+    // El stock se mantiene intacto en 0 (sin decrementos negativos ni inconsistencias)
+    expect(panInsumo()).toBe(0);
+
+    // Si el registro de la venta finaliza cobro con stockAlreadyDeducted, no se descuenta una segunda vez
+    const ventaCobro = db.registrarVenta({
+      tableNumber: 1, customerName: 'Carlos', employeeId: 2, employeeName: 'Empleado 1',
+      items: [{ productId: hamburguesa.product!.id, productName: hamburguesa.product!.name, quantity: 5, unitPrice: 15000 }],
+      paymentMethod: 'efectivo', applyDiscount: false, stockAlreadyDeducted: true
+    });
+    expect(ventaCobro.ok).toBe(true);
+    expect(panInsumo()).toBe(0);
+  });
+
+  it('si el pedido en espera se cancela, el stock se restaura correctamente al inventario', () => {
+    db.addInsumo({ code: 'BEB-JUGO', name: 'Jugo natural', unitOfMeasure: 'unidades' });
+    db.createPurchase({
+      providerId: 1, date: new Date().toISOString(), items: [{
+        supplyCode: 'BEB-JUGO', supplyName: '', unitOfMeasure: 'unidades',
+        packages: 10, unitsPerPackage: 1, packageCost: 500,
+        baseQuantity: 0, costPerBaseUnit: 0, subtotal: 0
+      }]
+    }, true);
+
+    const jugo = db.addManualProduct({
+      name: 'Jugo de mango', description: 'Fresco', price: 6000,
+      type: 'Bebida', recipe: [{ insumoCode: 'BEB-JUGO', quantityNeeded: 1 }]
+    });
+
+    // Se descuentan 4
+    db.descontarStockPorPedido([{ producto: jugo.product!, cantidad: 4 }], 'Pedido Mesa #5');
+    expect(db.supplies.find(s => s.code === 'BEB-JUGO')?.quantity).toBe(6);
+
+    // Se cancela el pedido: se deben reintegrar los 4
+    db.restaurarStockPorPedido([{ producto: jugo.product!, cantidad: 4 }], 'Cancelación Pedido Mesa #5');
+    expect(db.supplies.find(s => s.code === 'BEB-JUGO')?.quantity).toBe(10);
+  });
 });
+

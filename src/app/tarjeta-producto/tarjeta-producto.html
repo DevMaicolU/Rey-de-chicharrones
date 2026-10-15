@@ -12,9 +12,9 @@
       <span class="fw-bold fs-5 text-danger">{{ producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
       <span class="badge rounded-pill" [class.text-bg-success]="disponible" [class.text-bg-secondary]="!disponible">{{ disponible ? 'Disponible' : 'Agotado' }}</span>
     </div>
-    <div class="input-group">
-      <input class="form-control text-center" type="number" min="1" step="1" [(ngModel)]="cantidad" aria-label="Cantidad">
-      <button class="btn btn-danger rounded-pill px-4" type="button" [disabled]="!cantidadValida || !disponible" (click)="agregarAlCarrito()">{{ disponible ? 'Agregar' : 'No disponible' }}</button>
+    <div class="d-flex align-items-center gap-2">
+      <input class="form-control text-center rounded-3" style="max-width: 80px;" type="number" min="1" step="1" [(ngModel)]="cantidad" aria-label="Cantidad">
+      <button class="btn btn-danger rounded-pill px-4 flex-grow-1" type="button" [disabled]="!cantidadValida || !disponible" (click)="agregarAlCarrito()">{{ disponible ? 'Agregar' : 'No disponible' }}</button>
     </div>
   </div>
 </article>

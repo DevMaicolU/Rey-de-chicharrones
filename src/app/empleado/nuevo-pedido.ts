@@ -137,13 +137,23 @@ export class NuevoPedido {
       return;
     }
 
+    const resultadoDescuento = this.database.descontarStockPorPedido(
+      cartItems,
+      `Pedido Mesa #${mesa} - ${this.customerName.trim()}`
+    );
+    if (!resultadoDescuento.ok) {
+      this.error = resultadoDescuento.error ?? 'No hay existencias suficientes para registrar el pedido.';
+      this.toast.error(this.error);
+      return;
+    }
+
     const pedido = this.pedidosEspera.registrar(mesa, this.customerName, this.customerCedula, cartItems);
     this.cart.limpiarCarrito();
     this.tableNumber = null;
     this.customerName = '';
     this.customerCedula = '';
     this.error = '';
-    this.toast.exito(`Pedido de mesa ${pedido.mesa} registrado y enviado a espera.`);
+    this.toast.exito(`¡Pedido de mesa ${pedido.mesa} registrado e inventario descontado!`);
   }
 
   /** Alias de compatibilidad para integraciones y pruebas que usaban el nombre anterior. */
@@ -292,6 +302,15 @@ export class NuevoPedido {
       this.toast.error('El pedido debe tener al menos un producto. Si deseas eliminarlo, usa "Cancelar pedido".');
       return;
     }
+    const ajuste = this.database.ajustarStockPorEdicionPedido(
+      this.pedidoEditando.items,
+      this.itemsEditando,
+      `Ajuste Mesa #${this.pedidoEditando.mesa}`
+    );
+    if (!ajuste.ok) {
+      this.toast.error(ajuste.error ?? 'Inventario insuficiente para aplicar los cambios del pedido.');
+      return;
+    }
     this.pedidosEspera.actualizarItems(this.pedidoEditando.id, this.itemsEditando);
     this.toast.exito('Pedido actualizado correctamente.');
     this.cerrarEdicion();
@@ -311,9 +330,13 @@ export class NuevoPedido {
   confirmarCancelacion(): void {
     if (!this.pedidoACancelar) return;
     const mesa = this.pedidoACancelar.mesa;
+    this.database.restaurarStockPorPedido(
+      this.pedidoACancelar.items,
+      `Cancelación Pedido Mesa #${mesa}`
+    );
     this.pedidosEspera.eliminar(this.pedidoACancelar.id);
     this.cerrarCancelacion();
-    this.toast.info(`Pedido de mesa ${mesa} cancelado.`);
+    this.toast.info(`Pedido de mesa ${mesa} cancelado y existencias devueltas al inventario.`);
   }
 
   // ======================= Fase C: Cobro =======================
@@ -356,7 +379,8 @@ export class NuevoPedido {
       employeeName: employee.name,
       items: orderItems,
       paymentMethod: this.paymentMethod,
-      applyDiscount: this.applyDiscount
+      applyDiscount: this.applyDiscount,
+      stockAlreadyDeducted: true
     });
 
     if (!resultado.ok) {

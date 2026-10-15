@@ -191,4 +191,65 @@ describe('NuevoPedido', () => {
     // Debe mantenerse en 10 porque no hay stock para la 11va
     expect(componente.itemsEditando[0].cantidad).toBe(10);
   });
+
+  it('registrarPedido descuenta el stock inmediatamente y previene sobreventa', () => {
+    const componente = fixture.componentInstance;
+    const stockPan = () => db.supplies.find(s => s.code === 'PAN-001')?.quantity;
+    // Había 10 unidades iniciales de PAN-001
+    expect(stockPan()).toBe(10);
+
+    // Carrito tiene 2 lomos (consumen 2 PAN-001)
+    componente.tableNumber = 5;
+    componente.customerName = 'Julian';
+    componente.customerCedula = '12345678';
+    componente.registrarPedido();
+
+    // El stock debe reducirse de 10 a 8 inmediatamente
+    expect(stockPan()).toBe(8);
+    expect(cart.items).toHaveLength(0);
+
+    // Ahora intentamos agregar 9 unidades (solo quedan 8 en inventario)
+    cart.agregarAlCarrito(lomo, 9);
+    // CartService rechaza la adición por falta de stock
+    expect(cart.items).toHaveLength(0);
+
+    // Si agregamos exactamente las 8 restantes
+    cart.agregarAlCarrito(lomo, 8);
+    expect(cart.items[0].cantidad).toBe(8);
+
+    componente.tableNumber = 6;
+    componente.customerName = 'Diana';
+    componente.customerCedula = '87654321';
+    componente.registrarPedido();
+
+    // El stock queda exactamente en 0
+    expect(stockPan()).toBe(0);
+
+    // Si alguien intenta pedir 1 más, no puede
+    cart.agregarAlCarrito(lomo, 1);
+    expect(cart.items).toHaveLength(0);
+  });
+
+  it('cancela un pedido en espera y reintegra el stock al inventario', () => {
+    const componente = fixture.componentInstance;
+    const stockPan = () => db.supplies.find(s => s.code === 'PAN-001')?.quantity;
+
+    // Pedido con 2 lomos
+    componente.tableNumber = 7;
+    componente.customerName = 'Esteban';
+    componente.customerCedula = '11223344';
+    componente.registrarPedido();
+    expect(stockPan()).toBe(8);
+
+    const pedido = componente.pedidosEnEspera().find(p => p.mesa === 7)!;
+    expect(pedido).toBeDefined();
+
+    // Cancelar pedido
+    componente.abrirCancelacion(pedido);
+    componente.confirmarCancelacion();
+
+    // El stock vuelve de 8 a 10
+    expect(stockPan()).toBe(10);
+  });
 });
+

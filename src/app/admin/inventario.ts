@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatabaseService, Insumo, UnitOfMeasure } from '../servicios/database.service';
 import { Product } from '../entidades/modelos';
+import { IMAGEN_RESPALDO, usarImagenRespaldo } from '../util/imagen';
 
 @Component({
   selector: 'app-inventario',
@@ -18,6 +19,11 @@ export class Inventario {
   readonly supplies = toSignal(this.database.supplies$, { initialValue: this.database.supplies });
   readonly providers = toSignal(this.database.providers$, { initialValue: this.database.providers });
   readonly movements = toSignal(this.database.stockMovements$, { initialValue: this.database.stockMovements });
+  readonly imagenRespaldo = IMAGEN_RESPALDO;
+
+  onImageError(event: Event): void {
+    usarImagenRespaldo(event);
+  }
 
   readonly productForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
