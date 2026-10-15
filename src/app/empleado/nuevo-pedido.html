@@ -451,12 +451,12 @@
 
           <!-- Descuento -->
           <div class="form-check form-switch mb-3">
-            <input id="applyDiscountCobro" class="form-check-input" type="checkbox" [(ngModel)]="applyDiscount">
+            <input id="applyDiscountCobro" class="form-check-input" type="checkbox" [(ngModel)]="applyDiscount" (ngModelChange)="onDiscountChange()">
             <label class="form-check-label fw-semibold" for="applyDiscountCobro">Aplicar descuento del 10% (cliente frecuente)</label>
           </div>
 
           <!-- Resumen de totales -->
-          <div class="bg-light rounded-3 p-3 mb-3">
+          <div class="bg-light rounded-3 p-3 mb-3 border">
             <div class="d-flex justify-content-between small mb-1">
               <span class="text-secondary">Subtotal</span>
               <span>{{ subtotalCobro() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
@@ -474,21 +474,94 @@
           </div>
 
           <!-- Método de pago -->
-          <label class="form-label fw-semibold" for="paymentMethodCobro">Método de pago</label>
-          <select id="paymentMethodCobro" class="form-select mb-3" [(ngModel)]="paymentMethod">
-            <option value="efectivo">💵 Efectivo</option>
-            <option value="crédito">💳 Tarjeta de crédito / débito</option>
-            <option value="nequi">📱 Nequi</option>
-            <option value="pse">🏦 PSE / Transferencia</option>
-          </select>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="paymentMethodCobro">Método de pago</label>
+            <select id="paymentMethodCobro" class="form-select" [(ngModel)]="paymentMethod" (ngModelChange)="onPaymentMethodChange()">
+              <option value="efectivo">💵 Efectivo</option>
+              <option value="crédito">💳 Tarjeta de crédito / débito</option>
+              <option value="nequi">📱 Nequi</option>
+              <option value="pse">🏦 PSE / Transferencia</option>
+            </select>
+          </div>
+
+          <!-- Monto recibido (con cuánto paga) y Vuelto -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="montoRecibidoInput">
+              {{ paymentMethod === 'efectivo' ? '¿Con cuánto paga el cliente? (Efectivo recibido)' : 'Monto recibido' }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-danger fw-bold">$</span>
+              <input
+                id="montoRecibidoInput"
+                type="number"
+                min="0"
+                step="500"
+                class="form-control form-control-lg fw-bold"
+                placeholder="Ingresa el monto recibido..."
+                [(ngModel)]="montoRecibido"
+              >
+              <button class="btn btn-outline-secondary" type="button" (click)="fijarMontoExacto()">
+                Monto exacto
+              </button>
+            </div>
+
+            <!-- Accesos rápidos a billetes comunes -->
+            @if (paymentMethod === 'efectivo' && billetesSugeridos().length) {
+              <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
+                <small class="text-secondary me-1">Billetes sugeridos:</small>
+                @for (billete of billetesSugeridos(); track billete) {
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
+                    style="font-size: 0.75rem;"
+                    (click)="fijarMonto(billete)"
+                  >
+                    {{ billete | currency:'COP':'symbol-narrow':'1.0-0' }}
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Indicador condicional de vuelto o faltante -->
+            @if (montoRecibido !== null && montoRecibido !== undefined) {
+              @if (montoRecibido >= totalCobro()) {
+                <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 rounded-3 mt-3 mb-0">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fs-5">💵</span>
+                    <span class="fw-semibold">Vuelto / Cambio a entregar:</span>
+                  </div>
+                  <span class="fs-5 fw-bold text-success">{{ vuelto() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                </div>
+              } @else {
+                <div class="alert alert-warning d-flex justify-content-between align-items-center py-2 px-3 rounded-3 mt-3 mb-0">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fs-5">⚠️</span>
+                    <span class="fw-semibold">Monto insuficiente. Faltan:</span>
+                  </div>
+                  <strong class="text-danger fs-6">{{ (totalCobro() - montoRecibido) | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
+                </div>
+              }
+            } @else if (paymentMethod === 'efectivo') {
+              <small class="text-secondary d-block mt-1">
+                Ingresa con cuánto paga el cliente para calcular automáticamente el vuelto.
+              </small>
+            }
+          </div>
 
           @if (errorCobro) {
-            <div class="alert alert-danger rounded-3 py-2" role="alert">{{ errorCobro }}</div>
+            <div class="alert alert-danger rounded-3 py-2 mt-3" role="alert">{{ errorCobro }}</div>
           }
         </div>
         <div class="modal-footer">
           <button class="btn btn-light" type="button" (click)="cerrarCobro()">Cancelar</button>
-          <button class="btn btn-danger btn-lg fw-bold" type="button" (click)="finalizarCobro()">✅ Finalizar y Cobrar</button>
+          <button
+            class="btn btn-danger btn-lg fw-bold"
+            type="button"
+            [disabled]="!pagoValido()"
+            (click)="finalizarCobro()"
+          >
+            ✅ Finalizar y Cobrar
+          </button>
         </div>
       </div>
     </div>

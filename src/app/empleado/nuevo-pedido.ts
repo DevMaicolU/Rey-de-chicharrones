@@ -69,6 +69,7 @@ export class NuevoPedido {
   pedidoACobrar: PedidoEnEspera | null = null;
   paymentMethod: PaymentMethod = 'efectivo';
   applyDiscount = false;
+  montoRecibido: number | null = null;
   errorCobro = '';
 
   // --- Confirmación de cancelación ---
@@ -93,6 +94,55 @@ export class NuevoPedido {
   }
   totalCobro(): number {
     return this.subtotalCobro() - this.descuentoCobro();
+  }
+
+  vuelto(): number {
+    if (this.montoRecibido === null || this.montoRecibido === undefined || Number.isNaN(this.montoRecibido)) {
+      return 0;
+    }
+    return Math.max(0, this.montoRecibido - this.totalCobro());
+  }
+
+  pagoValido(): boolean {
+    if (this.paymentMethod !== 'efectivo') {
+      if (this.montoRecibido !== null && Number.isFinite(this.montoRecibido)) {
+        return this.montoRecibido >= this.totalCobro();
+      }
+      return true;
+    }
+    return (
+      this.montoRecibido !== null &&
+      Number.isFinite(this.montoRecibido) &&
+      this.montoRecibido >= this.totalCobro()
+    );
+  }
+
+  fijarMontoExacto(): void {
+    this.montoRecibido = this.totalCobro();
+  }
+
+  fijarMonto(valor: number): void {
+    this.montoRecibido = valor;
+  }
+
+  billetesSugeridos(): number[] {
+    const total = this.totalCobro();
+    const denominaciones = [2000, 5000, 10000, 20000, 50000, 100000];
+    return denominaciones.filter(d => d > total);
+  }
+
+  onPaymentMethodChange(): void {
+    if (this.paymentMethod !== 'efectivo') {
+      this.montoRecibido = this.totalCobro();
+    } else {
+      this.montoRecibido = null;
+    }
+  }
+
+  onDiscountChange(): void {
+    if (this.paymentMethod !== 'efectivo') {
+      this.montoRecibido = this.totalCobro();
+    }
   }
 
   // ======================= Fase A: Toma de comanda =======================
@@ -344,12 +394,14 @@ export class NuevoPedido {
     this.pedidoACobrar = pedido;
     this.paymentMethod = 'efectivo';
     this.applyDiscount = false;
+    this.montoRecibido = null;
     this.errorCobro = '';
     this.modalCobroVisible.set(true);
   }
 
   cerrarCobro(): void {
     this.pedidoACobrar = null;
+    this.montoRecibido = null;
     this.modalCobroVisible.set(false);
     this.errorCobro = '';
   }
@@ -364,12 +416,21 @@ export class NuevoPedido {
       return;
     }
 
+    if (!this.pagoValido()) {
+      const faltante = this.totalCobro() - (this.montoRecibido ?? 0);
+      this.errorCobro = `El monto recibido no puede ser menor al total a cobrar. Faltan ${faltante.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}.`;
+      return;
+    }
+
     const orderItems: OrderItem[] = pedido.items.map(item => ({
       productId: item.producto.id,
       productName: item.producto.name,
       quantity: item.cantidad,
       unitPrice: item.producto.price
     }));
+
+    const montoFinal = this.montoRecibido ?? this.totalCobro();
+    const vueltoFinal = this.vuelto();
 
     const resultado = this.database.registrarVenta({
       tableNumber: pedido.mesa,
@@ -380,7 +441,9 @@ export class NuevoPedido {
       items: orderItems,
       paymentMethod: this.paymentMethod,
       applyDiscount: this.applyDiscount,
-      stockAlreadyDeducted: true
+      stockAlreadyDeducted: true,
+      amountPaid: montoFinal,
+      change: vueltoFinal
     });
 
     if (!resultado.ok) {
@@ -390,7 +453,11 @@ export class NuevoPedido {
 
     this.pedidosEspera.eliminar(pedido.id);
     this.cerrarCobro();
-    this.toast.exito(`¡Pedido de mesa ${pedido.mesa} cobrado exitosamente!`);
+    if (vueltoFinal > 0) {
+      this.toast.exito(`¡Pedido de mesa ${pedido.mesa} cobrado exitosamente! Vuelto a entregar: ${vueltoFinal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}`);
+    } else {
+      this.toast.exito(`¡Pedido de mesa ${pedido.mesa} cobrado exitosamente!`);
+    }
   }
 
   // ======================= Helpers =======================

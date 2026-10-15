@@ -251,5 +251,67 @@ describe('NuevoPedido', () => {
     // El stock vuelve de 8 a 10
     expect(stockPan()).toBe(10);
   });
+
+  it('valida el monto recibido, calcula el vuelto correctamente e impide pagar con monto menor en efectivo', () => {
+    const componente = fixture.componentInstance;
+
+    // Crear un pedido
+    componente.tableNumber = 8;
+    componente.customerName = 'Catalina';
+    componente.customerCedula = '99887766';
+    componente.registrarPedido();
+
+    const pedido = componente.pedidosEnEspera().find(p => p.mesa === 8)!;
+    expect(pedido).toBeDefined();
+    expect(pedido.total).toBe(56000); // 2 lomos * 28000 = 56000
+
+    // Abrir modal de cobro
+    componente.abrirCobro(pedido);
+    expect(componente.totalCobro()).toBe(56000);
+    expect(componente.paymentMethod).toBe('efectivo');
+    expect(componente.montoRecibido).toBeNull();
+    // En efectivo, si no ha ingresado monto, el pago no es válido
+    expect(componente.pagoValido()).toBe(false);
+
+    // Intentar pagar con monto menor (ej: 50.000 cuando el total es 56.000)
+    componente.montoRecibido = 50000;
+    expect(componente.pagoValido()).toBe(false);
+    expect(componente.vuelto()).toBe(0);
+
+    // Intentar finalizar cobro con monto menor: debe fallar con error
+    componente.finalizarCobro();
+    expect(componente.errorCobro).toContain('no puede ser menor');
+
+    // Usar botón de monto exacto
+    componente.fijarMontoExacto();
+    expect(componente.montoRecibido).toBe(56000);
+    expect(componente.pagoValido()).toBe(true);
+    expect(componente.vuelto()).toBe(0);
+
+    // Pagar con un billete mayor (ej: 100.000)
+    componente.fijarMonto(100000);
+    expect(componente.pagoValido()).toBe(true);
+    // Vuelto debe ser 100.000 - 56.000 = 44.000
+    expect(componente.vuelto()).toBe(44000);
+
+    // Con descuento del 10%
+    componente.applyDiscount = true;
+    componente.onDiscountChange();
+    // Nuevo total: 56.000 - 5.600 = 50.400
+    expect(componente.totalCobro()).toBe(50400);
+    // Vuelto con 100.000: 100.000 - 50.400 = 49.600
+    expect(componente.vuelto()).toBe(49600);
+
+    // Finalizar cobro exitosamente
+    componente.finalizarCobro();
+    expect(componente.errorCobro).toBe('');
+    expect(componente.modalCobroVisible()).toBe(false);
+
+    // Verificar que la orden guardó amountPaid y change
+    const ultimaOrden = db.orders[db.orders.length - 1];
+    expect(ultimaOrden.amountPaid).toBe(100000);
+    expect(ultimaOrden.change).toBe(49600);
+  });
 });
+
 

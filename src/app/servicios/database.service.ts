@@ -96,6 +96,8 @@ export interface OrderRecord extends Order {
   discountApplied?: boolean;
   subtotal?: number;
   discount?: number;
+  amountPaid?: number;
+  change?: number;
 }
 
 export interface Resultado {
@@ -113,6 +115,8 @@ export interface VentaInput {
   paymentMethod: PaymentMethod;
   applyDiscount: boolean;
   stockAlreadyDeducted?: boolean;
+  amountPaid?: number;
+  change?: number;
 }
 
 export interface VentaResultado extends Resultado {
@@ -587,7 +591,9 @@ export class DatabaseService {
       paymentMethod: input.paymentMethod,
       discountApplied: invoice.discountApplied,
       subtotal: invoice.subtotal,
-      discount: invoice.discount
+      discount: invoice.discount,
+      amountPaid: input.amountPaid,
+      change: input.change
     });
 
     this.saveState();
@@ -897,7 +903,7 @@ export class DatabaseService {
 
   private persistOrder(
     order: Omit<Order, 'id' | 'createdAt'> &
-      Partial<Pick<OrderRecord, 'status' | 'paymentMethod' | 'discountApplied' | 'subtotal' | 'discount' | 'customerCedula'>>
+      Partial<Pick<OrderRecord, 'status' | 'paymentMethod' | 'discountApplied' | 'subtotal' | 'discount' | 'customerCedula' | 'amountPaid' | 'change'>>
   ): OrderRecord {
     const id = this.nextId(this.orders);
     const date = new Date().toISOString();
@@ -911,7 +917,9 @@ export class DatabaseService {
       products: order.items.map(item => ({ ...item })),
       status: order.status ?? 'completado',
       date,
-      createdAt: date
+      createdAt: date,
+      amountPaid: order.amountPaid,
+      change: order.change
     };
     this.ordersSubject.next([...this.orders, record]);
     this.saveState();
