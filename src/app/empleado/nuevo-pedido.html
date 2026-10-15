@@ -189,60 +189,212 @@
   <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editarPedidoTitle">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content rounded-4 border-0 shadow">
-        <div class="modal-header bg-danger text-white">
-          <h2 class="modal-title fs-5" id="editarPedidoTitle">Editar pedido — Mesa {{ pedidoEditando.mesa }} ({{ pedidoEditando.cliente }})</h2>
+        <div class="modal-header bg-danger text-white py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-5">✏️</span>
+            <div>
+              <h2 class="modal-title fs-5 fw-bold mb-0" id="editarPedidoTitle">Editar pedido — Mesa {{ pedidoEditando.mesa }}</h2>
+              <small class="text-white-50">Cliente: {{ pedidoEditando.cliente }}</small>
+            </div>
+          </div>
           <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="cerrarEdicion()"></button>
         </div>
-        <div class="modal-body">
-          <div class="table-responsive">
-            <table class="table align-middle mb-0">
-              <thead class="table-light">
-                <tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr>
+
+        <div class="modal-body p-4">
+          <!-- 1. Buscador Autocomplete (Independiente fuera de la tabla) -->
+          <div class="position-relative mb-3">
+            <label for="buscarProductoInput" class="form-label fw-semibold text-secondary small mb-1">
+              Agregar producto al pedido
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0 text-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                </svg>
+              </span>
+              <input
+                id="buscarProductoInput"
+                type="text"
+                class="form-control border-start-0 ps-1"
+                placeholder="🔍 Buscar comida o bebida para agregar..."
+                [(ngModel)]="busquedaMenu"
+                (focus)="abrirDropdownMenu()"
+                (input)="abrirDropdownMenu()"
+                (blur)="onBlurDropdownMenu()"
+                (keydown.escape)="cerrarDropdownMenu()"
+                autocomplete="off"
+              >
+              @if (busquedaMenu) {
+                <button class="btn btn-outline-secondary border-start-0" type="button" (mousedown)="limpiarBusqueda()" aria-label="Limpiar búsqueda">
+                  ✕
+                </button>
+              }
+            </div>
+
+            <!-- Menú desplegable con productos disponibles agrupados -->
+            @if (mostrarDropdownMenu) {
+              <div class="dropdown-menu show w-100 p-0 border border-danger-subtle rounded-3 mt-1 position-absolute autocomplete-dropdown">
+                @if (tieneResultadosBusqueda()) {
+                  <!-- Grupo: Comidas -->
+                  @if (productosFiltradosComida().length) {
+                    <div class="px-3 py-1 bg-light text-danger fw-bold small border-bottom d-flex justify-content-between align-items-center">
+                      <span>🍔 Comidas</span>
+                      <span class="badge bg-danger-subtle text-danger">{{ productosFiltradosComida().length }}</span>
+                    </div>
+                    @for (producto of productosFiltradosComida(); track producto.id) {
+                      <button
+                        type="button"
+                        class="dropdown-item px-3 py-2 d-flex justify-content-between align-items-center border-bottom border-light autocomplete-item"
+                        (mousedown)="seleccionarProductoAutocomplete(producto)"
+                      >
+                        <div class="d-flex flex-column text-start pe-2">
+                          <span class="fw-semibold text-dark">{{ producto.name }}</span>
+                          @if (producto.description) {
+                            <small class="text-secondary text-truncate" style="max-width: 380px;">{{ producto.description }}</small>
+                          }
+                        </div>
+                        <div class="text-end text-nowrap ms-2">
+                          <span class="fw-bold text-danger">{{ producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                          @if (!tieneStock(producto)) {
+                            <span class="badge bg-warning text-dark d-block mt-1" style="font-size: 0.65rem;">Stock agotándose</span>
+                          }
+                        </div>
+                      </button>
+                    }
+                  }
+
+                  <!-- Grupo: Bebidas -->
+                  @if (productosFiltradosBebida().length) {
+                    <div class="px-3 py-1 bg-light text-danger fw-bold small border-bottom border-top d-flex justify-content-between align-items-center">
+                      <span>🥤 Bebidas</span>
+                      <span class="badge bg-danger-subtle text-danger">{{ productosFiltradosBebida().length }}</span>
+                    </div>
+                    @for (producto of productosFiltradosBebida(); track producto.id) {
+                      <button
+                        type="button"
+                        class="dropdown-item px-3 py-2 d-flex justify-content-between align-items-center border-bottom border-light autocomplete-item"
+                        (mousedown)="seleccionarProductoAutocomplete(producto)"
+                      >
+                        <div class="d-flex flex-column text-start pe-2">
+                          <span class="fw-semibold text-dark">{{ producto.name }}</span>
+                          @if (producto.description) {
+                            <small class="text-secondary text-truncate" style="max-width: 380px;">{{ producto.description }}</small>
+                          }
+                        </div>
+                        <div class="text-end text-nowrap ms-2">
+                          <span class="fw-bold text-danger">{{ producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                          @if (!tieneStock(producto)) {
+                            <span class="badge bg-warning text-dark d-block mt-1" style="font-size: 0.65rem;">Stock agotándose</span>
+                          }
+                        </div>
+                      </button>
+                    }
+                  }
+                } @else {
+                  <div class="p-3 text-center text-secondary small">
+                    No se encontraron productos que coincidan con "{{ busquedaMenu }}"
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- 2. Tabla limpia de productos en el pedido con scroll interno -->
+          <div class="table-responsive border rounded-3 modal-table-scroll mb-3">
+            <table class="table align-middle mb-0 table-hover">
+              <thead>
+                <tr>
+                  <th scope="col" class="py-2 px-3">Producto</th>
+                  <th scope="col" class="py-2 text-end" style="width: 130px;">Precio Unitario</th>
+                  <th scope="col" class="py-2 text-center" style="width: 140px;">Cantidad</th>
+                  <th scope="col" class="py-2 text-end" style="width: 130px;">Subtotal</th>
+                  <th scope="col" class="py-2 text-center" style="width: 60px;"><span class="visually-hidden">Quitar</span></th>
+                </tr>
               </thead>
               <tbody>
                 @for (item of itemsEditando; track item.producto.id) {
                   <tr>
-                    <td class="fw-semibold">{{ item.producto.name }}</td>
-                    <td>{{ item.producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
-                    <td>
-                      <div class="input-group input-group-sm" style="width: 120px;">
-                        <button class="btn btn-outline-danger" type="button" [disabled]="item.cantidad <= 1" (click)="cambiarCantidadEdicion(item, item.cantidad - 1)">−</button>
-                        <input class="form-control text-center" type="number" min="1" [value]="item.cantidad" (change)="cambiarCantidadEdicion(item, +$any($event.target).value)">
-                        <button class="btn btn-outline-danger" type="button" (click)="cambiarCantidadEdicion(item, item.cantidad + 1)">+</button>
-                      </div>
-                      <div class="border-top mt-3 pt-3">
-                        <h3 class="h6 text-danger fw-bold">Agregar desde el menú</h3>
-                        <div class="row row-cols-1 row-cols-md-2 g-2">
-                          @for (producto of menu(); track producto.id) {
-                            <div class="col">
-                              <button class="btn btn-outline-danger w-100 text-start d-flex justify-content-between align-items-center" type="button" (click)="agregarProductoEdicion(producto)">
-                                <span>{{ producto.name }} <small class="text-secondary">({{ producto.type }})</small></span>
-                                <span class="fw-semibold">{{ producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-                              </button>
-                            </div>
-                          }
-                        </div>
+                    <td class="px-3">
+                      <span class="fw-semibold text-dark">{{ item.producto.name }}</span>
+                      <small class="text-secondary d-block">{{ item.producto.type }}</small>
+                    </td>
+                    <td class="text-end text-secondary">
+                      {{ item.producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}
+                    </td>
+                    <td class="text-center">
+                      <div class="input-group input-group-sm mx-auto" style="width: 110px;">
+                        <button
+                          class="btn btn-outline-danger d-flex align-items-center justify-content-center"
+                          type="button"
+                          [disabled]="item.cantidad <= 1"
+                          (click)="cambiarCantidadEdicion(item, item.cantidad - 1)"
+                          aria-label="Disminuir cantidad"
+                        >−</button>
+                        <input
+                          #campoCantidad
+                          class="form-control text-center px-1 fw-semibold"
+                          type="number"
+                          min="1"
+                          step="1"
+                          [value]="item.cantidad"
+                          (change)="cambiarCantidadEdicion(item, +campoCantidad.value)"
+                          aria-label="Cantidad"
+                        >
+                        <button
+                          class="btn btn-outline-danger d-flex align-items-center justify-content-center"
+                          type="button"
+                          (click)="cambiarCantidadEdicion(item, item.cantidad + 1)"
+                          aria-label="Aumentar cantidad"
+                        >+</button>
                       </div>
                     </td>
-                    <td class="fw-bold">{{ item.subtotal | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
-                    <td><button class="btn btn-sm btn-link text-danger" type="button" (click)="eliminarItemEdicion(item)">Quitar</button></td>
+                    <td class="text-end fw-bold text-danger">
+                      {{ item.subtotal | currency:'COP':'symbol-narrow':'1.0-0' }}
+                    </td>
+                    <td class="text-center">
+                      <button
+                        class="btn btn-sm btn-outline-danger p-1 rounded-2"
+                        type="button"
+                        (click)="eliminarItemEdicion(item)"
+                        title="Quitar {{ item.producto.name }}"
+                        aria-label="Quitar producto"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+                          <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.058l-.5-8.5a.5.5 0 0 1 .47-.528M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5m2.438.5a.5.5 0 0 1 .53.47l.5 8.5a.5.5 0 0 1-.998.058l-.5-8.5a.5.5 0 0 1 .468-.528"/>
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="5" class="text-center text-secondary py-3">Sin productos. Cancela el pedido en su lugar.</td></tr>
+                  <tr>
+                    <td colspan="5" class="text-center py-4 text-secondary">
+                      <div class="mb-1">🧺 No hay productos en este pedido.</div>
+                      <small>Usa el buscador de arriba para agregar productos del menú.</small>
+                    </td>
+                  </tr>
                 }
               </tbody>
             </table>
           </div>
-          <div class="d-flex justify-content-end p-3 bg-light rounded-bottom-3 mt-2">
+
+          <!-- 3. Resumen y Nuevo Total -->
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3 border">
+            <div>
+              <small class="text-secondary d-block">Productos en comanda</small>
+              <span class="fw-semibold text-dark">{{ itemsEditando.length }} producto{{ itemsEditando.length !== 1 ? 's' : '' }}</span>
+            </div>
             <div class="text-end">
-              <small class="text-secondary">Nuevo total</small>
-              <div class="h4 text-danger fw-bold mb-0">{{ totalEdicion() | currency:'COP':'symbol-narrow':'1.0-0' }}</div>
+              <small class="text-secondary d-block">Nuevo total</small>
+              <span class="h4 text-danger fw-bold mb-0">{{ totalEdicion() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-light" type="button" (click)="cerrarEdicion()">Cancelar</button>
-          <button class="btn btn-danger fw-bold" type="button" (click)="guardarEdicion()">Guardar cambios</button>
+
+        <div class="modal-footer bg-light-subtle rounded-bottom-4">
+          <button class="btn btn-outline-secondary px-4" type="button" (click)="cerrarEdicion()">Cancelar</button>
+          <button class="btn btn-danger fw-bold px-4" type="button" [disabled]="!itemsEditando.length" (click)="guardarEdicion()">
+            Guardar cambios
+          </button>
         </div>
       </div>
     </div>

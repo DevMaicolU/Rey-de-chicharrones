@@ -14,7 +14,29 @@ import { IMAGEN_RESPALDO, usarImagenRespaldo } from '../util/imagen';
 @Component({
   selector: 'app-nuevo-pedido',
   imports: [CurrencyPipe, DatePipe, FormsModule, RouterLink],
-  templateUrl: './nuevo-pedido.html'
+  templateUrl: './nuevo-pedido.html',
+  styles: [`
+    .modal-table-scroll {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .modal-table-scroll thead th {
+      position: sticky;
+      top: 0;
+      background-color: #f8f9fa;
+      z-index: 2;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .autocomplete-dropdown {
+      max-height: 270px;
+      overflow-y: auto;
+      z-index: 1065;
+      box-shadow: 0 8px 24px rgba(127, 21, 37, 0.15);
+    }
+    .autocomplete-item:hover {
+      background-color: #fff5f5;
+    }
+  `]
 })
 export class NuevoPedido {
   private readonly database = inject(DatabaseService);
@@ -38,6 +60,8 @@ export class NuevoPedido {
   // --- Fase B: Edición de pedido en espera ---
   pedidoEditando: PedidoEnEspera | null = null;
   itemsEditando: CartItem[] = [];
+  busquedaMenu = '';
+  mostrarDropdownMenu = false;
   readonly menu = toSignal(this.database.activeProducts$, { initialValue: this.database.activeProducts });
 
   // --- Fase C: Modal de cobro ---
@@ -126,6 +150,36 @@ export class NuevoPedido {
   finalizarPedido(): void {
     // Compatibilidad con integraciones antiguas; la UI nueva exige la cédula explícita.
     if (!this.customerCedula.trim()) this.customerCedula = '000000';
+    const employee = this.auth.activeUser;
+    const cartItems = this.cart.items;
+    const mesa = this.tableNumber;
+    if (employee && mesa && Number.isInteger(mesa) && mesa >= 1 && this.customerName.trim() && cartItems.length) {
+      const orderItems: OrderItem[] = cartItems.map(item => ({
+        productId: item.producto.id,
+        productName: item.producto.name,
+        quantity: item.cantidad,
+        unitPrice: item.producto.price
+      }));
+      const resultado = this.database.registrarVenta({
+        tableNumber: mesa,
+        customerName: this.customerName.trim(),
+        customerCedula: this.customerCedula,
+        employeeId: employee.id,
+        employeeName: employee.name,
+        items: orderItems,
+        paymentMethod: 'efectivo',
+        applyDiscount: false
+      });
+      if (resultado.ok) {
+        this.cart.limpiarCarrito();
+        this.tableNumber = null;
+        this.customerName = '';
+        this.customerCedula = '';
+        this.error = '';
+        void this.router.navigateByUrl('/empleado/registros');
+        return;
+      }
+    }
     this.registrarPedido();
     if (!this.error) void this.router.navigateByUrl('/empleado/registros');
   }
@@ -139,17 +193,67 @@ export class NuevoPedido {
   abrirEdicion(pedido: PedidoEnEspera): void {
     this.pedidoEditando = pedido;
     this.itemsEditando = pedido.items.map(i => ({ ...i }));
+    this.busquedaMenu = '';
+    this.mostrarDropdownMenu = false;
   }
 
   cerrarEdicion(): void {
     this.pedidoEditando = null;
     this.itemsEditando = [];
+    this.busquedaMenu = '';
+    this.mostrarDropdownMenu = false;
+  }
+
+  abrirDropdownMenu(): void {
+    this.mostrarDropdownMenu = true;
+  }
+
+  cerrarDropdownMenu(): void {
+    this.mostrarDropdownMenu = false;
+  }
+
+  limpiarBusqueda(): void {
+    this.busquedaMenu = '';
+  }
+
+  onBlurDropdownMenu(): void {
+    setTimeout(() => {
+      this.mostrarDropdownMenu = false;
+    }, 200);
+  }
+
+  productosFiltradosComida(): Product[] {
+    const query = this.busquedaMenu.trim().toLowerCase();
+    return this.menu().filter(p => p.type === 'Comida' && (!query || p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query)));
+  }
+
+  productosFiltradosBebida(): Product[] {
+    const query = this.busquedaMenu.trim().toLowerCase();
+    return this.menu().filter(p => p.type === 'Bebida' && (!query || p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query)));
+  }
+
+  tieneResultadosBusqueda(): boolean {
+    return this.productosFiltradosComida().length > 0 || this.productosFiltradosBebida().length > 0;
+  }
+
+  tieneStock(producto: Product): boolean {
+    const actual = this.itemsEditando.find(item => item.producto.id === producto.id);
+    const reservado = actual?.cantidad ?? 0;
+    return this.database.stockSuficiente(producto, 1, reservado);
+  }
+
+  seleccionarProductoAutocomplete(producto: Product): void {
+    this.agregarProductoEdicion(producto);
+    this.busquedaMenu = '';
+    this.mostrarDropdownMenu = false;
   }
 
   cambiarCantidadEdicion(item: CartItem, cantidad: number): void {
+    if (Number.isNaN(cantidad) || !Number.isFinite(cantidad)) return;
     const cant = Math.max(1, Math.floor(cantidad));
     if (!this.database.stockSuficiente(item.producto, cant)) {
-      this.toast.advertencia('Stock insuficiente para este producto.');
+      this.toast.advertencia(`Stock insuficiente de insumos para preparar "${item.producto.name}".`);
+      this.itemsEditando = [...this.itemsEditando];
       return;
     }
     this.itemsEditando = this.itemsEditando.map(i =>
@@ -167,11 +271,14 @@ export class NuevoPedido {
     const actual = this.itemsEditando.find(item => item.producto.id === producto.id);
     const cantidadActual = actual?.cantidad ?? 0;
     if (!this.database.stockSuficiente(producto, 1, cantidadActual)) {
-      this.toast.advertencia('Stock insuficiente para este producto.');
+      this.toast.advertencia(`Stock insuficiente de insumos para preparar "${producto.name}".`);
       return;
     }
-    if (actual) this.cambiarCantidadEdicion(actual, actual.cantidad + 1);
-    else this.itemsEditando = [...this.itemsEditando, { producto, cantidad: 1, subtotal: producto.price }];
+    if (actual) {
+      this.cambiarCantidadEdicion(actual, actual.cantidad + 1);
+    } else {
+      this.itemsEditando = [...this.itemsEditando, { producto, cantidad: 1, subtotal: producto.price }];
+    }
     this.toast.exito(`${producto.name} añadido al pedido.`);
   }
 

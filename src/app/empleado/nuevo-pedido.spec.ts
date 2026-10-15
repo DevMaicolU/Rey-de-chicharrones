@@ -120,4 +120,75 @@ describe('NuevoPedido', () => {
     expect(cart.items).toHaveLength(0);
     expect(navegaciones).toEqual(['/empleado/registros']);
   });
+
+  it('permite abrir el modal de edición, buscar y agregar un producto por autocomplete', () => {
+    const componente = fixture.componentInstance;
+    const pedidoMock = {
+      id: 'ped-1',
+      mesa: 2,
+      cliente: 'Carlos',
+      cedulaCliente: '1020304050',
+      empleadoId: 2,
+      empleadoNombre: 'Empleado Principal',
+      items: [{ producto: lomo, cantidad: 1, subtotal: 28000 }],
+      total: 28000,
+      fecha: new Date().toISOString(),
+      hora: '20:00',
+      estado: 'en-espera' as const
+    };
+
+    componente.abrirEdicion(pedidoMock);
+    expect(componente.pedidoEditando).toBe(pedidoMock);
+    expect(componente.itemsEditando).toHaveLength(1);
+    expect(componente.busquedaMenu).toBe('');
+    expect(componente.mostrarDropdownMenu).toBe(false);
+
+    // Búsqueda en autocomplete
+    componente.busquedaMenu = 'lomo';
+    expect(componente.productosFiltradosComida()).toHaveLength(1);
+    expect(componente.tieneResultadosBusqueda()).toBe(true);
+
+    // Agregar producto existente incrementa cantidad
+    componente.seleccionarProductoAutocomplete(lomo);
+    expect(componente.itemsEditando[0].cantidad).toBe(2);
+    expect(componente.itemsEditando[0].subtotal).toBe(56000);
+    expect(componente.totalEdicion()).toBe(56000);
+    expect(componente.busquedaMenu).toBe('');
+    expect(componente.mostrarDropdownMenu).toBe(false);
+
+    // Disminuir y quitar
+    componente.cambiarCantidadEdicion(componente.itemsEditando[0], 1);
+    expect(componente.itemsEditando[0].cantidad).toBe(1);
+    expect(componente.totalEdicion()).toBe(28000);
+
+    componente.eliminarItemEdicion(componente.itemsEditando[0]);
+    expect(componente.itemsEditando).toHaveLength(0);
+    expect(componente.totalEdicion()).toBe(0);
+
+    componente.cerrarEdicion();
+    expect(componente.pedidoEditando).toBeNull();
+  });
+
+  it('no agrega ni incrementa productos si no hay suficiente stock en insumos', () => {
+    const componente = fixture.componentInstance;
+    const pedidoMock = {
+      id: 'ped-2',
+      mesa: 3,
+      cliente: 'Mario',
+      cedulaCliente: '1020304051',
+      empleadoId: 2,
+      empleadoNombre: 'Empleado Principal',
+      items: [{ producto: lomo, cantidad: 10, subtotal: 280000 }], // Ya tiene 10 unidades (todo el stock de PAN-001)
+      total: 280000,
+      fecha: new Date().toISOString(),
+      hora: '20:00',
+      estado: 'en-espera' as const
+    };
+
+    componente.abrirEdicion(pedidoMock);
+    // Intentar agregar otra unidad cuando no hay más stock
+    componente.seleccionarProductoAutocomplete(lomo);
+    // Debe mantenerse en 10 porque no hay stock para la 11va
+    expect(componente.itemsEditando[0].cantidad).toBe(10);
+  });
 });
