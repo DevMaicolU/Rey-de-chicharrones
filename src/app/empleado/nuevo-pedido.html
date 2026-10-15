@@ -202,7 +202,7 @@
 
         <div class="modal-body p-4">
           <!-- 1. Buscador Autocomplete (Independiente fuera de la tabla) -->
-          <div class="position-relative mb-3">
+          <div class="position-relative mb-3 autocomplete-container">
             <label for="buscarProductoInput" class="form-label fw-semibold text-secondary small mb-1">
               Agregar producto al pedido
             </label>
@@ -234,6 +234,10 @@
             <!-- Menú desplegable con productos disponibles agrupados -->
             @if (mostrarDropdownMenu) {
               <div class="dropdown-menu show w-100 p-0 border border-danger-subtle rounded-3 mt-1 position-absolute autocomplete-dropdown">
+                <div class="d-flex justify-content-between align-items-center px-3 py-1 bg-light border-bottom small">
+                  <span class="text-secondary fw-semibold">Menú disponible</span>
+                  <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-semibold" (mousedown)="cerrarDropdownMenu()">✕ Cerrar lista</button>
+                </div>
                 @if (tieneResultadosBusqueda()) {
                   <!-- Grupo: Comidas -->
                   @if (productosFiltradosComida().length) {
@@ -484,69 +488,71 @@
             </select>
           </div>
 
-          <!-- Monto recibido (con cuánto paga) y Vuelto -->
-          <div class="mb-3">
-            <label class="form-label fw-semibold" for="montoRecibidoInput">
-              {{ paymentMethod === 'efectivo' ? '¿Con cuánto paga el cliente? (Efectivo recibido)' : 'Monto recibido' }}
-            </label>
-            <div class="input-group">
-              <span class="input-group-text bg-white text-danger fw-bold">$</span>
-              <input
-                id="montoRecibidoInput"
-                type="number"
-                min="0"
-                step="500"
-                class="form-control form-control-lg fw-bold"
-                placeholder="Ingresa el monto recibido..."
-                [(ngModel)]="montoRecibido"
-              >
-              <button class="btn btn-outline-secondary" type="button" (click)="fijarMontoExacto()">
-                Monto exacto
-              </button>
-            </div>
-
-            <!-- Accesos rápidos a billetes comunes -->
-            @if (paymentMethod === 'efectivo' && billetesSugeridos().length) {
-              <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
-                <small class="text-secondary me-1">Billetes sugeridos:</small>
-                @for (billete of billetesSugeridos(); track billete) {
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
-                    style="font-size: 0.75rem;"
-                    (click)="fijarMonto(billete)"
-                  >
-                    {{ billete | currency:'COP':'symbol-narrow':'1.0-0' }}
-                  </button>
-                }
+          <!-- Sección exclusiva para Efectivo: Monto recibido, billetes sugeridos y Cambio -->
+          @if (paymentMethod === 'efectivo') {
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="montoRecibidoInput">
+                ¿Con cuánto paga el cliente?
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white text-danger fw-bold fs-5">$</span>
+                <input
+                  id="montoRecibidoInput"
+                  type="number"
+                  min="0"
+                  step="500"
+                  class="form-control form-control-lg fw-bold"
+                  placeholder="0"
+                  [(ngModel)]="montoRecibido"
+                >
+                <button class="btn btn-outline-secondary px-3 fw-semibold text-nowrap" type="button" (click)="fijarMontoExacto()">
+                  Exacto
+                </button>
               </div>
-            }
 
-            <!-- Indicador condicional de vuelto o faltante -->
-            @if (montoRecibido !== null && montoRecibido !== undefined) {
-              @if (montoRecibido >= totalCobro()) {
-                <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 rounded-3 mt-3 mb-0">
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="fs-5">💵</span>
-                    <span class="fw-semibold">Vuelto / Cambio a entregar:</span>
-                  </div>
-                  <span class="fs-5 fw-bold text-success">{{ vuelto() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-                </div>
-              } @else {
-                <div class="alert alert-warning d-flex justify-content-between align-items-center py-2 px-3 rounded-3 mt-3 mb-0">
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="fs-5">⚠️</span>
-                    <span class="fw-semibold">Monto insuficiente. Faltan:</span>
-                  </div>
-                  <strong class="text-danger fs-6">{{ (totalCobro() - montoRecibido) | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
+              <!-- Accesos rápidos a billetes comunes -->
+              @if (billetesSugeridos().length) {
+                <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
+                  <small class="text-secondary me-1">Billetes sugeridos:</small>
+                  @for (billete of billetesSugeridos(); track billete) {
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
+                      style="font-size: 0.75rem;"
+                      (click)="fijarMonto(billete)"
+                    >
+                      {{ billete | currency:'COP':'symbol-narrow':'1.0-0' }}
+                    </button>
+                  }
                 </div>
               }
-            } @else if (paymentMethod === 'efectivo') {
-              <small class="text-secondary d-block mt-1">
-                Ingresa con cuánto paga el cliente para calcular automáticamente el vuelto.
-              </small>
-            }
-          </div>
+
+              <!-- Indicador condicional de cambio o faltante -->
+              @if (montoRecibido !== null && montoRecibido !== undefined) {
+                @if (montoRecibido >= totalCobro()) {
+                  <div class="alert alert-success d-flex justify-content-between align-items-center py-2 px-3 rounded-3 mt-3 mb-0">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="fs-5">💵</span>
+                      <span class="fw-semibold">Cambio a entregar:</span>
+                    </div>
+                    <span class="fs-5 fw-bold text-success">{{ vuelto() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                  </div>
+                } @else {
+                  <div class="alert alert-warning d-flex justify-content-between align-items-center py-2 px-3 rounded-3 mt-3 mb-0">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="fs-5">⚠️</span>
+                      <span class="fw-semibold">Monto insuficiente. Faltan:</span>
+                    </div>
+                    <strong class="text-danger fs-6">{{ (totalCobro() - montoRecibido) | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
+                  </div>
+                }
+              } @else {
+                <small class="text-secondary d-block mt-1">
+                  Ingresa con cuánto paga el cliente para calcular automáticamente el cambio.
+                </small>
+              }
+            </div>
+          }
 
           @if (errorCobro) {
             <div class="alert alert-danger rounded-3 py-2 mt-3" role="alert">{{ errorCobro }}</div>

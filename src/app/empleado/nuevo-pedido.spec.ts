@@ -312,6 +312,59 @@ describe('NuevoPedido', () => {
     expect(ultimaOrden.amountPaid).toBe(100000);
     expect(ultimaOrden.change).toBe(49600);
   });
+
+  it('permite cobrar normalmente sin solicitar monto recibido ni vuelto cuando el método de pago no es efectivo', () => {
+    const componente = fixture.componentInstance;
+
+    // Crear un pedido
+    componente.tableNumber = 9;
+    componente.customerName = 'Mariana';
+    componente.customerCedula = '11223344';
+    componente.registrarPedido();
+
+    const pedido = componente.pedidosEnEspera().find(p => p.mesa === 9)!;
+    expect(pedido).toBeDefined();
+
+    // Abrir modal de cobro y seleccionar método no efectivo (ej: Nequi)
+    componente.abrirCobro(pedido);
+    componente.paymentMethod = 'nequi';
+    componente.onPaymentMethodChange();
+
+    expect(componente.montoRecibido).toBeNull();
+    // Para pagos electrónicos pasa normal sin exigir monto recibido
+    expect(componente.pagoValido()).toBe(true);
+
+    componente.finalizarCobro();
+    expect(componente.errorCobro).toBe('');
+    expect(componente.modalCobroVisible()).toBe(false);
+
+    const ordenNequi = db.orders[db.orders.length - 1];
+    expect(ordenNequi.paymentMethod).toBe('nequi');
+    expect(ordenNequi.amountPaid).toBeUndefined();
+    expect(ordenNequi.change).toBeUndefined();
+  });
+
+  it('cierra el menú de autocompletado al hacer clic por fuera o presionar escape', () => {
+    const componente = fixture.componentInstance;
+    componente.mostrarDropdownMenu = true;
+
+    // Presionar escape
+    componente.onEscapePress();
+    expect(componente.mostrarDropdownMenu).toBe(false);
+
+    // Abrir de nuevo y simular clic por fuera
+    componente.mostrarDropdownMenu = true;
+    const dummyElement = document.createElement('div');
+    document.body.appendChild(dummyElement);
+
+    const event = new MouseEvent('click', { bubbles: true });
+    Object.defineProperty(event, 'target', { value: dummyElement });
+    componente.onDocumentClick(event);
+
+    expect(componente.mostrarDropdownMenu).toBe(false);
+    dummyElement.remove();
+  });
 });
+
 
 

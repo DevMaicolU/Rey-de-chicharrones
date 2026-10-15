@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -105,9 +105,6 @@ export class NuevoPedido {
 
   pagoValido(): boolean {
     if (this.paymentMethod !== 'efectivo') {
-      if (this.montoRecibido !== null && Number.isFinite(this.montoRecibido)) {
-        return this.montoRecibido >= this.totalCobro();
-      }
       return true;
     }
     return (
@@ -132,17 +129,11 @@ export class NuevoPedido {
   }
 
   onPaymentMethodChange(): void {
-    if (this.paymentMethod !== 'efectivo') {
-      this.montoRecibido = this.totalCobro();
-    } else {
-      this.montoRecibido = null;
-    }
+    this.montoRecibido = null;
   }
 
   onDiscountChange(): void {
-    if (this.paymentMethod !== 'efectivo') {
-      this.montoRecibido = this.totalCobro();
-    }
+    // En métodos electrónicos no se requiere monto recibido; en efectivo el usuario ingresa el monto
   }
 
   // ======================= Fase A: Toma de comanda =======================
@@ -280,6 +271,22 @@ export class NuevoPedido {
     setTimeout(() => {
       this.mostrarDropdownMenu = false;
     }, 200);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.mostrarDropdownMenu) return;
+    const target = event.target as HTMLElement | null;
+    if (target && !target.closest('.autocomplete-container')) {
+      this.mostrarDropdownMenu = false;
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePress(): void {
+    if (this.mostrarDropdownMenu) {
+      this.mostrarDropdownMenu = false;
+    }
   }
 
   productosFiltradosComida(): Product[] {
@@ -429,8 +436,9 @@ export class NuevoPedido {
       unitPrice: item.producto.price
     }));
 
-    const montoFinal = this.montoRecibido ?? this.totalCobro();
-    const vueltoFinal = this.vuelto();
+    const isEfectivo = this.paymentMethod === 'efectivo';
+    const montoFinal = isEfectivo ? (this.montoRecibido ?? this.totalCobro()) : this.totalCobro();
+    const vueltoFinal = isEfectivo ? this.vuelto() : 0;
 
     const resultado = this.database.registrarVenta({
       tableNumber: pedido.mesa,
@@ -442,8 +450,8 @@ export class NuevoPedido {
       paymentMethod: this.paymentMethod,
       applyDiscount: this.applyDiscount,
       stockAlreadyDeducted: true,
-      amountPaid: montoFinal,
-      change: vueltoFinal
+      amountPaid: isEfectivo ? montoFinal : undefined,
+      change: isEfectivo ? vueltoFinal : undefined
     });
 
     if (!resultado.ok) {
@@ -453,8 +461,8 @@ export class NuevoPedido {
 
     this.pedidosEspera.eliminar(pedido.id);
     this.cerrarCobro();
-    if (vueltoFinal > 0) {
-      this.toast.exito(`¡Pedido de mesa ${pedido.mesa} cobrado exitosamente! Vuelto a entregar: ${vueltoFinal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}`);
+    if (isEfectivo && vueltoFinal > 0) {
+      this.toast.exito(`¡Pedido de mesa ${pedido.mesa} cobrado exitosamente! Cambio a entregar: ${vueltoFinal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}`);
     } else {
       this.toast.exito(`¡Pedido de mesa ${pedido.mesa} cobrado exitosamente!`);
     }
