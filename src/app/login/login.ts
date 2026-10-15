@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../servicios/auth.service';
+import { ThemeService } from '../servicios/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -11,6 +12,7 @@ import { AuthService } from '../servicios/auth.service';
 export class Login implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  readonly theme = inject(ThemeService);
 
   username = '';
   password = '';

@@ -14,6 +14,18 @@
         <a class="nav-link" routerLink="empleados" routerLinkActive="active fw-bold">👥 Empleados</a>
         <a class="nav-link" routerLink="reportes" routerLinkActive="active fw-bold">📊 Reportes</a>
       </div>
+      <!-- Botón de Modo Oscuro / Claro -->
+      <button
+        type="button"
+        class="btn btn-outline-light btn-sm rounded-pill px-3 py-1 me-3 d-inline-flex align-items-center gap-2 theme-toggle-btn shadow-sm"
+        (click)="theme.toggleTheme()"
+        [attr.aria-label]="theme.isDark() ? 'Activar modo claro' : 'Activar modo oscuro'"
+        [title]="theme.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+      >
+        <span class="lh-1">{{ theme.isDark() ? '☀️' : '🌙' }}</span>
+        <span>{{ theme.isDark() ? 'Modo Claro' : 'Modo Oscuro' }}</span>
+      </button>
+
       <span class="navbar-text text-white me-3 fw-semibold">👤 {{ auth.activeUser?.name }}</span>
       <button class="btn btn-outline-light btn-sm rounded-3" type="button" (click)="salir()">Cerrar Sesión</button>
     </div>

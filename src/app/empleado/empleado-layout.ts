@@ -4,6 +4,7 @@ import { AsyncPipe } from '@angular/common';
 import { AuthService } from '../servicios/auth.service';
 import { CartService } from '../servicios/cart.service';
 import { DatabaseService } from '../servicios/database.service';
+import { ThemeService } from '../servicios/theme.service';
 import { usarImagenRespaldo } from '../util/imagen';
 
 @Component({
@@ -17,6 +18,7 @@ export class EmpleadoLayout {
   readonly cartCount$ = inject(CartService).totalItems$;
   readonly database = inject(DatabaseService);
   private readonly cart = inject(CartService);
+  readonly theme = inject(ThemeService);
   readonly manejarErrorImagen = usarImagenRespaldo;
 
   salir(): void {
@@ -25,3 +27,4 @@ export class EmpleadoLayout {
     this.router.navigateByUrl('/login');
   }
 }
+

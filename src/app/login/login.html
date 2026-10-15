@@ -1,4 +1,16 @@
-<main class="min-vh-100 d-flex align-items-center bg-light">
+<main class="min-vh-100 d-flex align-items-center bg-light position-relative">
+  <div class="position-absolute top-0 end-0 p-3">
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-2 theme-toggle-btn shadow-sm"
+      (click)="theme.toggleTheme()"
+      [attr.aria-label]="theme.isDark() ? 'Activar modo claro' : 'Activar modo oscuro'"
+      [title]="theme.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    >
+      <span class="lh-1">{{ theme.isDark() ? '☀️' : '🌙' }}</span>
+      <span>{{ theme.isDark() ? 'Modo Claro' : 'Modo Oscuro' }}</span>
+    </button>
+  </div>
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-12 col-sm-9 col-md-6 col-lg-4">

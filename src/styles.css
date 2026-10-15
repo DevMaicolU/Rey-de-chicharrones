@@ -1,12 +1,79 @@
 /* =====================================================
-   MANILA POS — Estilos globales
-   Paleta: rojo/carmín #dc3545, dorado #ffc107, fondo #f8f9fa
+   ROYALSOFT POS — SISTEMA DE DISEÑO Y PALETAS (LIGHT & DARK)
+   Paleta: rojo/carmín vibrante, acentos dorados, neutros modernos
    ===================================================== */
 
+:root, [data-bs-theme="light"], .light-theme {
+    --app-bg: #FFF8EE;
+    --app-main-bg: #f8f9fa;
+    --app-card-bg: #ffffff;
+    --app-card-border: #ebdccb;
+    --app-text: #212529;
+    --app-text-muted: #6c757d;
+    --app-navbar-bg: #dc3545;
+    --app-navbar-shadow: rgba(127, 21, 37, 0.20);
+    --app-primary: #dc3545;
+    --app-primary-hover: #bb2d3b;
+    --app-accent-gold: #ffc107;
+    --app-table-header-bg: #f8f9fa;
+    --app-input-bg: #ffffff;
+    --app-input-border: #ced4da;
+    --app-input-color: #212529;
+    --app-surface-subtle: #f8f9fa;
+    --app-hover-bg: #fff5f5;
+    --app-ticket-bg: #fffdf8;
+    --app-ticket-border: #e5d9c7;
+    --app-ticket-text: #27221e;
+    --app-ticket-line: #9e8f7b;
+    --app-shadow: 0 0.5rem 1.25rem rgba(127, 21, 37, 0.08);
+}
+
+[data-bs-theme="dark"], .dark-theme {
+    --app-bg: #0d0f14;
+    --app-main-bg: #12151d;
+    --app-card-bg: #181c26;
+    --app-card-border: #282f40;
+    --app-text: #f3f5f8;
+    --app-text-muted: #9aa5b8;
+    --app-navbar-bg: #7f1220;
+    --app-navbar-shadow: rgba(0, 0, 0, 0.45);
+    --app-primary: #ff4d61;
+    --app-primary-hover: #ff6879;
+    --app-accent-gold: #ffc038;
+    --app-table-header-bg: #1f2533;
+    --app-input-bg: #131720;
+    --app-input-border: #2c3447;
+    --app-input-color: #f3f5f8;
+    --app-surface-subtle: #161a24;
+    --app-hover-bg: #262c3d;
+    --app-ticket-bg: #171b24;
+    --app-ticket-border: #2c3447;
+    --app-ticket-text: #e2e8f0;
+    --app-ticket-line: #424e66;
+    --app-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.35);
+
+    /* Bootstrap Dark Overrides */
+    --bs-body-bg: #0d0f14;
+    --bs-body-color: #f3f5f8;
+    --bs-tertiary-bg: #161a24;
+    --bs-secondary-bg: #1f2533;
+    --bs-border-color: #282f40;
+}
+
 html, body {
-    background-color: #FFF8EE !important;
     font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+    background-color: var(--app-bg) !important;
+    color: var(--app-text);
     scroll-behavior: smooth;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* =====================================================
+   MAIN CONTAINER / LAYOUTS
+   ===================================================== */
+main.bg-light {
+    background-color: var(--app-main-bg) !important;
+    transition: background-color 0.25s ease;
 }
 
 /* =====================================================
@@ -16,29 +83,218 @@ html, body {
     position: sticky;
     top: 0;
     z-index: 1040;
-    box-shadow: 0 2px 16px rgba(127, 21, 37, 0.20);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    transition: box-shadow 0.25s ease;
+    background-color: var(--app-navbar-bg) !important;
+    box-shadow: 0 2px 18px var(--app-navbar-shadow);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Botón de cambio de tema */
+.theme-toggle-btn {
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.theme-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.7) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-btn:active {
+    transform: translateY(0);
 }
 
 /* =====================================================
-   HOVER SHADOW — Tarjetas interactivas
+   CARDS & SUPERFICIES
    ===================================================== */
+.card {
+    background-color: var(--app-card-bg);
+    border-color: var(--app-card-border);
+    color: var(--app-text);
+    transition: box-shadow 0.2s ease, background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.card-header.bg-white,
+.card-footer.bg-white {
+    background-color: var(--app-card-bg) !important;
+    border-color: var(--app-card-border) !important;
+    color: var(--app-text);
+}
+
 .hover-shadow {
-    transition: box-shadow 0.22s ease, transform 0.22s ease;
+    transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
 }
 
 .hover-shadow:hover {
     transform: translateY(-3px);
-    box-shadow: 0 0.75rem 1.5rem rgba(127, 21, 37, 0.12) !important;
+    box-shadow: var(--app-shadow) !important;
+}
+
+[data-bs-theme="dark"] .card {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
 }
 
 /* =====================================================
-   CARDS — Mejoras generales
+   FORM CONTROLS & INPUTS
    ===================================================== */
-.card {
-    transition: box-shadow 0.2s ease;
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: var(--app-input-bg);
+    border-color: var(--app-input-border);
+    color: var(--app-input-color);
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+    background-color: #161b25;
+    border-color: var(--app-primary);
+    color: #ffffff;
+    box-shadow: 0 0 0 0.25rem rgba(255, 77, 97, 0.25);
+}
+
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: #687387;
+}
+
+[data-bs-theme="dark"] .input-group-text {
+    background-color: var(--app-input-bg) !important;
+    border-color: var(--app-input-border);
+    color: var(--app-text);
+}
+
+[data-bs-theme="dark"] .input-group-text.bg-white {
+    background-color: var(--app-input-bg) !important;
+}
+
+/* =====================================================
+   TABLAS & HEADERS
+   ===================================================== */
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: var(--app-card-bg);
+    --bs-table-color: var(--app-text);
+    --bs-table-border-color: var(--app-card-border);
+    --bs-table-hover-bg: var(--app-hover-bg);
+    --bs-table-hover-color: var(--app-text);
+}
+
+[data-bs-theme="dark"] .table-light,
+[data-bs-theme="dark"] .thead-light th,
+[data-bs-theme="dark"] thead.table-light th {
+    background-color: var(--app-table-header-bg) !important;
+    color: var(--app-text) !important;
+    border-color: var(--app-card-border);
+}
+
+[data-bs-theme="dark"] .modal-table-scroll thead th {
+    background-color: var(--app-table-header-bg) !important;
+    color: var(--app-text) !important;
+    border-bottom: 2px solid var(--app-card-border) !important;
+}
+
+/* =====================================================
+   MODALES
+   ===================================================== */
+[data-bs-theme="dark"] .modal-content {
+    background-color: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
+    color: var(--app-text);
+}
+
+[data-bs-theme="dark"] .modal-header.bg-danger {
+    background-color: var(--app-navbar-bg) !important;
+}
+
+[data-bs-theme="dark"] .modal-footer.bg-light-subtle {
+    background-color: var(--app-surface-subtle) !important;
+    border-top: 1px solid var(--app-card-border);
+}
+
+/* =====================================================
+   ELEMENTOS SECUNDARIOS Y TEXTOS
+   ===================================================== */
+[data-bs-theme="dark"] .text-secondary {
+    color: var(--app-text-muted) !important;
+}
+
+[data-bs-theme="dark"] .text-dark {
+    color: var(--app-text) !important;
+}
+
+[data-bs-theme="dark"] .text-danger {
+    color: var(--app-primary) !important;
+}
+
+[data-bs-theme="dark"] .bg-light {
+    background-color: var(--app-surface-subtle) !important;
+    color: var(--app-text);
+}
+
+[data-bs-theme="dark"] .border {
+    border-color: var(--app-card-border) !important;
+}
+
+[data-bs-theme="dark"] .dropdown-menu {
+    background-color: var(--app-card-bg);
+    border-color: var(--app-card-border);
+    color: var(--app-text);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+[data-bs-theme="dark"] .dropdown-item {
+    color: var(--app-text);
+}
+
+[data-bs-theme="dark"] .dropdown-item:hover,
+[data-bs-theme="dark"] .dropdown-item:focus {
+    background-color: var(--app-hover-bg);
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .product-image-container {
+    background-color: #10131a !important;
+}
+
+/* =====================================================
+   BOTONES
+   ===================================================== */
+[data-bs-theme="dark"] .btn-danger {
+    background-color: #d12d41;
+    border-color: #d12d41;
+}
+
+[data-bs-theme="dark"] .btn-danger:hover {
+    background-color: #e5384d;
+    border-color: #e5384d;
+}
+
+[data-bs-theme="dark"] .btn-outline-danger {
+    color: var(--app-primary);
+    border-color: var(--app-primary);
+}
+
+[data-bs-theme="dark"] .btn-outline-danger:hover {
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .btn-light {
+    background-color: var(--app-surface-subtle);
+    border-color: var(--app-card-border);
+    color: var(--app-text);
+}
+
+[data-bs-theme="dark"] .btn-light:hover {
+    background-color: var(--app-hover-bg);
+    color: #ffffff;
 }
 
 /* =====================================================
@@ -48,14 +304,15 @@ html, body {
     width: min(100%, 390px);
     margin-inline: auto;
     padding: 1.5rem 1.25rem;
-    color: #27221e;
-    background: #fffdf8;
-    border: 1px solid #e5d9c7;
-    border-top: 8px solid #7f1525;
+    color: var(--app-ticket-text);
+    background: var(--app-ticket-bg);
+    border: 1px solid var(--app-ticket-border);
+    border-top: 8px solid var(--app-primary);
     border-radius: 0.25rem;
-    box-shadow: 0 0.5rem 1.25rem rgba(127, 21, 37, 0.12);
+    box-shadow: var(--app-shadow);
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.82rem;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .ticket-pdf-host {
@@ -67,7 +324,7 @@ html, body {
 }
 
 .ticket-brand {
-    color: #7f1525;
+    color: var(--app-primary);
     font-family: 'Poppins', system-ui, sans-serif;
     font-size: 1.65rem;
     font-weight: 800;
@@ -76,7 +333,7 @@ html, body {
 
 .ticket-rule {
     margin: 0.8rem 0;
-    border-top: 1px dashed #9e8f7b;
+    border-top: 1px dashed var(--app-ticket-line);
 }
 
 .ticket-meta {
@@ -88,7 +345,7 @@ html, body {
 }
 
 .ticket-total {
-    color: #7f1525;
+    color: var(--app-primary);
     font-size: 1.05rem;
     font-weight: 800;
 }
