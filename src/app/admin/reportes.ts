@@ -35,12 +35,12 @@ export class Reportes {
   async descargarFacturaPdf(order: OrderRecord): Promise<void> {
     const ticket = document.getElementById(`admin-ticket-pdf-${order.id}`);
     if (!ticket) return;
-    const canvas = await html2canvas(ticket, { backgroundColor: '#fffdf8', scale: 2, useCORS: true });
+    const canvas = await html2canvas(ticket, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const margin = 15;
     const width = pdf.internal.pageSize.getWidth() - margin * 2;
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, width, (canvas.height * width) / canvas.width);
-    pdf.save(`Factura_RoyalSoft_Pedido_${order.id}.pdf`);
+    pdf.save(`Factura_Rey_De_Los_Chicharrones_Pedido_${order.id}.pdf`);
   }
   filteredPurchases(): Purchase[] {
     const start = this.startDate ? new Date(`${this.startDate}T00:00:00`).getTime() : -Infinity;

@@ -216,7 +216,7 @@
                 id="buscarProductoInput"
                 type="text"
                 class="form-control border-start-0 ps-1"
-                placeholder="Buscar comida o bebida para agregar..."
+                placeholder="Buscar por nombre, descripción o insumos (ej: queso, tocino)..."
                 [(ngModel)]="busquedaMenu"
                 (focus)="abrirDropdownMenu()"
                 (input)="abrirDropdownMenu()"
@@ -256,6 +256,9 @@
                           @if (producto.description) {
                             <small class="text-secondary text-truncate" style="max-width: 380px;">{{ producto.description }}</small>
                           }
+                          @if (insumosDeProducto(producto); as insumos) {
+                            <small class="text-secondary text-truncate" style="max-width: 380px; font-size: 0.72rem;">🧂 {{ insumos }}</small>
+                          }
                         </div>
                         <div class="text-end text-nowrap ms-2">
                           <span class="fw-bold text-danger">{{ producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
@@ -283,6 +286,9 @@
                           <span class="fw-semibold text-dark">{{ producto.name }}</span>
                           @if (producto.description) {
                             <small class="text-secondary text-truncate" style="max-width: 380px;">{{ producto.description }}</small>
+                          }
+                          @if (insumosDeProducto(producto); as insumos) {
+                            <small class="text-secondary text-truncate" style="max-width: 380px; font-size: 0.72rem;">🧂 {{ insumos }}</small>
                           }
                         </div>
                         <div class="text-end text-nowrap ms-2">
@@ -359,7 +365,7 @@
                       <button
                         class="btn btn-sm btn-outline-danger p-1 rounded-2"
                         type="button"
-                        (click)="eliminarItemEdicion(item)"
+                        (click)="abrirConfirmacionEliminarItem(item)"
                         title="Quitar {{ item.producto.name }}"
                         aria-label="Quitar producto"
                       >
@@ -404,6 +410,30 @@
     </div>
   </div>
   <div class="modal-backdrop fade show"></div>
+}
+
+<!-- ===== MODAL: CONFIRMAR ELIMINACIÓN DE PRODUCTO EN EDICIÓN ===== -->
+@if (modalEliminarItemVisible && itemAEliminarEdicion) {
+  <div class="modal fade show d-block" style="z-index: 1070;" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="eliminarItemTitle">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header bg-danger text-white">
+          <h2 class="modal-title fs-5 fw-bold" id="eliminarItemTitle">Quitar producto</h2>
+          <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="cerrarConfirmacionEliminarItem()"></button>
+        </div>
+        <div class="modal-body text-center py-4">
+          <p class="mb-1">¿Estás seguro de quitar este producto del pedido?</p>
+          <strong class="text-danger fs-6">{{ itemAEliminarEdicion.producto.name }}</strong>
+          <p class="small text-secondary mt-2 mb-0">Podrás volver a agregarlo desde el buscador si lo deseas.</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button class="btn btn-light px-3" type="button" (click)="cerrarConfirmacionEliminarItem()">No, mantener</button>
+          <button class="btn btn-danger fw-bold px-3" type="button" (click)="confirmarEliminarItemEdicion()">Sí, quitar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" style="z-index: 1069;"></div>
 }
 
 <!-- ===== MODAL: CONFIRMAR CANCELACIÓN ===== -->

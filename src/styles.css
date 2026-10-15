@@ -46,10 +46,10 @@
     --app-input-color: #f3f5f8;
     --app-surface-subtle: #161a24;
     --app-hover-bg: #262c3d;
-    --app-ticket-bg: #171b24;
-    --app-ticket-border: #2c3447;
-    --app-ticket-text: #e2e8f0;
-    --app-ticket-line: #424e66;
+    --app-ticket-bg: #ffffff;
+    --app-ticket-border: #dee2e6;
+    --app-ticket-text: #212529;
+    --app-ticket-line: #b0b8c4;
     --app-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.35);
 
     /* Bootstrap Dark Overrides */
@@ -310,21 +310,53 @@ main.bg-light {
 }
 
 /* =====================================================
-   TICKET PDF
+   TICKET PDF / FACTURA (SIEMPRE BLANCA, INMUNE AL TEMA OSCURO)
    ===================================================== */
-.ticket-shell {
+.ticket-shell,
+[data-bs-theme="dark"] .ticket-shell,
+.dark-theme .ticket-shell {
     width: min(100%, 390px);
     margin-inline: auto;
     padding: 1.5rem 1.25rem;
-    color: var(--app-ticket-text);
-    background: var(--app-ticket-bg);
-    border: 1px solid var(--app-ticket-border);
-    border-top: 8px solid var(--app-primary);
-    border-radius: 0.25rem;
-    box-shadow: var(--app-shadow);
+    color: #212529 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    border-top: 8px solid #dc3545 !important;
+    border-radius: 0.35rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15) !important;
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.82rem;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: none !important;
+}
+
+.ticket-shell *,
+[data-bs-theme="dark"] .ticket-shell *,
+.dark-theme .ticket-shell * {
+    color: #212529 !important;
+    background-color: transparent !important;
+}
+
+.ticket-shell .text-success,
+[data-bs-theme="dark"] .ticket-shell .text-success,
+.dark-theme .ticket-shell .text-success {
+    color: #198754 !important;
+}
+
+.ticket-shell .ticket-brand,
+[data-bs-theme="dark"] .ticket-shell .ticket-brand,
+.dark-theme .ticket-shell .ticket-brand,
+.ticket-shell .ticket-total,
+[data-bs-theme="dark"] .ticket-shell .ticket-total,
+.dark-theme .ticket-shell .ticket-total {
+    color: #dc3545 !important;
+    font-weight: 800 !important;
+}
+
+.ticket-shell .ticket-rule,
+[data-bs-theme="dark"] .ticket-shell .ticket-rule,
+.dark-theme .ticket-shell .ticket-rule {
+    margin: 0.8rem 0;
+    border-top: 1px dashed #b0b8c4 !important;
 }
 
 .ticket-pdf-host {
@@ -336,16 +368,10 @@ main.bg-light {
 }
 
 .ticket-brand {
-    color: var(--app-primary);
     font-family: 'Poppins', system-ui, sans-serif;
-    font-size: 1.65rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    letter-spacing: 0.16em;
-}
-
-.ticket-rule {
-    margin: 0.8rem 0;
-    border-top: 1px dashed var(--app-ticket-line);
+    letter-spacing: 0.12em;
 }
 
 .ticket-meta {
@@ -357,7 +383,6 @@ main.bg-light {
 }
 
 .ticket-total {
-    color: var(--app-primary);
     font-size: 1.05rem;
     font-weight: 800;
 }

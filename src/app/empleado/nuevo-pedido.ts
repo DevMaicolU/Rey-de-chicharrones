@@ -63,6 +63,11 @@ export class NuevoPedido {
   busquedaMenu = '';
   mostrarDropdownMenu = false;
   readonly menu = toSignal(this.database.activeProducts$, { initialValue: this.database.activeProducts });
+  readonly supplies = toSignal(this.database.supplies$, { initialValue: this.database.supplies });
+
+  // Confirmación al quitar producto en edición
+  itemAEliminarEdicion: CartItem | null = null;
+  modalEliminarItemVisible = false;
 
   // --- Fase C: Modal de cobro ---
   modalCobroVisible = signal(false);
@@ -269,6 +274,8 @@ export class NuevoPedido {
     this.itemsEditando = [];
     this.busquedaMenu = '';
     this.mostrarDropdownMenu = false;
+    this.itemAEliminarEdicion = null;
+    this.modalEliminarItemVisible = false;
   }
 
   abrirDropdownMenu(): void {
@@ -305,14 +312,41 @@ export class NuevoPedido {
     }
   }
 
+  coincideBusqueda(producto: Product, query: string): boolean {
+    if (!query) return true;
+    if (producto.name.toLowerCase().includes(query)) return true;
+    if (producto.description?.toLowerCase().includes(query)) return true;
+    if (producto.ingredients?.some(ing => ing.toLowerCase().includes(query))) return true;
+
+    // Búsqueda por insumos de la receta (código o nombre del insumo)
+    if (producto.recipe?.length) {
+      const suppliesList = this.supplies();
+      return producto.recipe.some(item => {
+        if (item.insumoCode.toLowerCase().includes(query)) return true;
+        const supply = suppliesList.find(s => s.code === item.insumoCode);
+        return supply ? supply.name.toLowerCase().includes(query) : false;
+      });
+    }
+
+    return false;
+  }
+
+  insumosDeProducto(producto: Product): string {
+    if (!producto.recipe?.length) return '';
+    const suppliesList = this.supplies();
+    return producto.recipe
+      .map(r => suppliesList.find(s => s.code === r.insumoCode)?.name ?? r.insumoCode)
+      .join(', ');
+  }
+
   productosFiltradosComida(): Product[] {
     const query = this.busquedaMenu.trim().toLowerCase();
-    return this.menu().filter(p => p.type === 'Comida' && (!query || p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query)));
+    return this.menu().filter(p => p.type === 'Comida' && this.coincideBusqueda(p, query));
   }
 
   productosFiltradosBebida(): Product[] {
     const query = this.busquedaMenu.trim().toLowerCase();
-    return this.menu().filter(p => p.type === 'Bebida' && (!query || p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query)));
+    return this.menu().filter(p => p.type === 'Bebida' && this.coincideBusqueda(p, query));
   }
 
   tieneResultadosBusqueda(): boolean {
@@ -346,8 +380,26 @@ export class NuevoPedido {
     );
   }
 
+  abrirConfirmacionEliminarItem(item: CartItem): void {
+    this.itemAEliminarEdicion = item;
+    this.modalEliminarItemVisible = true;
+  }
+
+  cerrarConfirmacionEliminarItem(): void {
+    this.itemAEliminarEdicion = null;
+    this.modalEliminarItemVisible = false;
+  }
+
+  confirmarEliminarItemEdicion(): void {
+    if (!this.itemAEliminarEdicion) return;
+    const nombre = this.itemAEliminarEdicion.producto.name;
+    this.itemsEditando = this.itemsEditando.filter(i => i.producto.id !== this.itemAEliminarEdicion!.producto.id);
+    this.cerrarConfirmacionEliminarItem();
+    this.toast.info(`"${nombre}" quitado del pedido.`);
+  }
+
   eliminarItemEdicion(item: CartItem): void {
-    this.itemsEditando = this.itemsEditando.filter(i => i.producto.id !== item.producto.id);
+    this.abrirConfirmacionEliminarItem(item);
   }
 
   agregarProductoEdicion(producto: Product): void {

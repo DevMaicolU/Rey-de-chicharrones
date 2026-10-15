@@ -162,6 +162,7 @@ describe('NuevoPedido', () => {
     expect(componente.totalEdicion()).toBe(28000);
 
     componente.eliminarItemEdicion(componente.itemsEditando[0]);
+    componente.confirmarEliminarItemEdicion();
     expect(componente.itemsEditando).toHaveLength(0);
     expect(componente.totalEdicion()).toBe(0);
 
@@ -400,7 +401,55 @@ describe('NuevoPedido', () => {
 
     expect(componente.error).toContain('ya tiene un pedido en curso en la Mesa 12');
   });
+
+  it('permite buscar productos por insumos al editar un pedido', () => {
+    const componente = fixture.componentInstance;
+
+    // Buscar por nombre de insumo (ej: 'pan')
+    componente.busquedaMenu = 'pan';
+    const resultadosComida = componente.productosFiltradosComida();
+
+    // Debe encontrar productos que contengan pan en su receta
+    expect(resultadosComida.length).toBeGreaterThan(0);
+    const contienePan = resultadosComida.some(p =>
+      p.recipe?.some(r => r.insumoCode.toLowerCase().includes('pan'))
+    );
+    expect(contienePan).toBe(true);
+  });
+
+  it('solicita confirmación modal antes de quitar un producto al editar un pedido', () => {
+    const componente = fixture.componentInstance;
+    const lomo = db.activeProducts.find(p => p.name.includes('Lomo'))!;
+
+    componente.itemsEditando = [
+      { producto: lomo, cantidad: 2, subtotal: lomo.price * 2 }
+    ];
+    expect(componente.itemsEditando.length).toBe(1);
+
+    // Intentar eliminar producto: debe abrir modal de confirmación sin borrar aún
+    const item = componente.itemsEditando[0];
+    componente.eliminarItemEdicion(item);
+
+    expect(componente.modalEliminarItemVisible).toBe(true);
+    expect(componente.itemAEliminarEdicion).toBe(item);
+    expect(componente.itemsEditando.length).toBe(1);
+
+    // Cancelar la eliminación
+    componente.cerrarConfirmacionEliminarItem();
+    expect(componente.modalEliminarItemVisible).toBe(false);
+    expect(componente.itemAEliminarEdicion).toBeNull();
+    expect(componente.itemsEditando.length).toBe(1);
+
+    // Abrir de nuevo y confirmar
+    componente.abrirConfirmacionEliminarItem(item);
+    componente.confirmarEliminarItemEdicion();
+
+    expect(componente.modalEliminarItemVisible).toBe(false);
+    expect(componente.itemAEliminarEdicion).toBeNull();
+    expect(componente.itemsEditando.length).toBe(0);
+  });
 });
+
 
 
 

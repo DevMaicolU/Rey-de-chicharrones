@@ -40,8 +40,8 @@
     @for (ticket of misPedidos(); track ticket.id) {
     <section class="ticket-shell" [id]="'ticket-pdf-' + ticket.id" aria-label="Factura electrónica">
       <div class="ticket-header text-center">
-        <div class="ticket-brand">ROYALSOFT</div>
-        <div class="small">Restaurante RoyalSoft S.A.S.</div>
+        <div class="ticket-brand">REY DE LOS CHICHARRONES</div>
+        <div class="small fw-semibold">Rey de los chicharrones S.A.S.</div>
         <div class="small">NIT 901.234.567-8</div>
         <div class="ticket-rule"></div>
         <div class="small">FACTURA ELECTRÓNICA #{{ ticket.orderId }}</div>
