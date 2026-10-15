@@ -1,47 +1,52 @@
 <div class="container">
   <header class="mb-4">
-    <h1 class="h2 text-danger mb-1">Gestión de Inventario</h1>
-    <p class="text-secondary mb-0">Crea productos locales y define su receta de insumos (BOM).</p>
+    <span class="badge text-bg-warning mb-2">ADMINISTRACIÓN</span>
+    <h1 class="h2 text-danger fw-bold mb-1">Gestión de Inventario</h1>
+    <p class="text-secondary mb-0">Administra los productos de venta, los insumos del restaurante y consulta los movimientos de existencias.</p>
   </header>
 
+  <!-- ===== SECCIÓN: CREAR / EDITAR PRODUCTO ===== -->
   <section class="card border-0 shadow-sm mb-5">
     <div class="card-header bg-white border-0 pt-4 px-4">
-      <h2 class="h4 mb-1">{{ editingProductId ? 'Editar producto' : 'Crear producto de venta' }}</h2>
-      <p class="text-secondary mb-0">Define la información comercial y la receta que consume existencias.</p>
+      <h2 class="h4 mb-1 text-danger fw-bold">{{ editingProductId ? 'Editar producto de venta' : 'Crear producto de venta' }}</h2>
+      <p class="text-secondary mb-0">Define el nombre, precio, tipo y la receta de insumos que consume cada producto.</p>
     </div>
     <div class="card-body px-4">
       <form [formGroup]="productForm" (ngSubmit)="createProduct()" novalidate>
         <h3 class="h6 text-danger border-bottom pb-2 mb-3">Información del producto</h3>
         <div class="row g-3">
           <div class="col-12 col-md-6">
-            <label class="form-label" for="productName">Nombre</label>
-            <input id="productName" class="form-control" formControlName="name" required>
+            <label class="form-label" for="productName">Nombre del producto</label>
+            <input id="productName" class="form-control" formControlName="name" placeholder="Ej: Chicharrón especial" required>
           </div>
           <div class="col-12 col-md-3">
-            <label class="form-label" for="productType">Tipo</label>
+            <label class="form-label" for="productType">Categoría</label>
             <select id="productType" class="form-select" formControlName="type">
               <option value="Comida">Comida</option>
               <option value="Bebida">Bebida</option>
             </select>
           </div>
           <div class="col-12 col-md-3">
-            <label class="form-label" for="productPrice">Precio</label>
-            <input id="productPrice" class="form-control" type="number" min="1" formControlName="price" required>
+            <label class="form-label" for="productPrice">Precio de venta (COP)</label>
+            <input id="productPrice" class="form-control" type="number" min="1" formControlName="price" placeholder="Ej: 15000" required>
           </div>
           <div class="col-12">
-            <label class="form-label" for="productDescription">Descripción</label>
-            <textarea id="productDescription" class="form-control" rows="2" formControlName="description" required></textarea>
+            <label class="form-label" for="productDescription">Descripción corta</label>
+            <textarea id="productDescription" class="form-control" rows="2" formControlName="description" placeholder="Describe brevemente el plato o bebida." required></textarea>
           </div>
           <div class="col-12">
-            <label class="form-label" for="productImageUrl">Imagen (URL local o base64)</label>
-            <input id="productImageUrl" class="form-control" formControlName="imageUrl">
+            <label class="form-label" for="productImageUrl">URL de imagen (opcional)</label>
+            <input id="productImageUrl" class="form-control" formControlName="imageUrl" placeholder="https://... o ruta local">
           </div>
         </div>
 
         <div class="mt-4 pt-3 border-top" formArrayName="recipe">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <div><h3 class="h5 mb-0">Receta y consumo de insumos</h3><p class="small text-secondary mb-0">Guardar la receta no modifica las existencias.</p></div>
-            <button class="btn btn-sm btn-outline-danger" type="button" (click)="addRecipeItem()">Agregar insumo</button>
+            <div>
+              <h3 class="h5 mb-0">Receta del producto</h3>
+              <p class="small text-secondary mb-0">Define qué insumos y en qué cantidad consume este producto al venderse.</p>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="addRecipeItem()">+ Agregar insumo</button>
           </div>
           @for (recipeItem of recipeItems.controls; track $index; let index = $index) {
             <div class="row g-2 align-items-end mb-2" [formGroupName]="index">
@@ -63,63 +68,75 @@
               </div>
             </div>
           } @empty {
-            <p class="small text-secondary mb-0">Agrega los insumos que consume este producto.</p>
+            <p class="small text-secondary mb-0">Agrega los insumos que consume este producto al prepararse.</p>
           }
         </div>
 
         @if (productError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ productError }}</div> }
         @if (productMessage) { <div class="alert alert-success py-2 mt-3 mb-0" role="status">{{ productMessage }}</div> }
         <div class="text-end mt-4">
-          @if (editingProductId) { <button class="btn btn-light me-2" type="button" (click)="cancelProductEdit()">Cancelar</button> }
+          @if (editingProductId) { <button class="btn btn-light me-2" type="button" (click)="cancelProductEdit()">Cancelar edición</button> }
           <button class="btn btn-warning fw-semibold" type="submit">{{ editingProductId ? 'Guardar cambios' : 'Crear producto' }}</button>
         </div>
       </form>
     </div>
   </section>
 
+  <!-- ===== SECCIÓN: LISTADO DE PRODUCTOS ===== -->
   <section class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <div><h2 class="h4 text-danger mb-1">Productos de venta</h2><p class="text-secondary mb-0">Productos disponibles para pedidos y ventas.</p></div>
-      <span class="badge text-bg-danger">{{ products().length }} registrados</span>
+      <div>
+        <h2 class="h4 text-danger fw-bold mb-1">Productos de venta</h2>
+        <p class="text-secondary mb-0">Todos los productos disponibles para que los empleados realicen pedidos.</p>
+      </div>
+      <span class="badge text-bg-danger">{{ products().length }} registrado{{ products().length !== 1 ? 's' : '' }}</span>
     </div>
     <div class="row g-3">
       @for (product of products(); track product.id) {
         <article class="col-12 col-md-6 col-xl-4">
-          <div class="card h-100 border-0 shadow-sm">
+          <div class="card h-100 border-0 shadow-sm rounded-4">
             <div class="card-body">
-              <div class="d-flex justify-content-between gap-2">
-                <h3 class="h5">{{ product.name }}</h3>
-                <span class="badge text-bg-light">{{ product.type }}</span>
+              <div class="d-flex justify-content-between gap-2 mb-1">
+                <h3 class="h5 fw-bold mb-0">{{ product.name }}</h3>
+                <span class="badge text-bg-light flex-shrink-0">{{ product.type }}</span>
               </div>
-              <p class="small text-secondary">{{ product.description }}</p>
-              <p class="small mb-3">
-                @for (item of product.recipe; track item.insumoCode) {
-                  <span class="d-block">{{ supplyName(item.insumoCode) }}: {{ item.quantityNeeded }}</span>
-                }
-              </p>
-              <div class="border-top pt-2 mb-3 small">
-                <div class="d-flex justify-content-between"><span>Costo estimado</span><strong>@if (estimatedCost(product); as cost) { {{ cost | currency:'COP':'symbol-narrow':'1.0-0' }} } @else { N/D }</strong></div>
-                <div class="d-flex justify-content-between"><span>Margen bruto</span><strong>@if (estimatedMargin(product); as margin) { {{ margin | currency:'COP':'symbol-narrow':'1.0-0' }} ({{ margin / product.price * 100 | number:'1.0-1' }}%) } @else { N/D }</strong></div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <strong>{{ product.price | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
-                <div class="btn-group btn-group-sm"><button class="btn btn-outline-warning" type="button" (click)="editProduct(product)">Editar</button><button class="btn btn-outline-danger" type="button" (click)="removeProduct(product)">Eliminar</button></div>
+              <p class="small text-secondary mb-3">{{ product.description }}</p>
+              @if (product.recipe.length) {
+                <div class="mb-3">
+                  <div class="small fw-semibold text-secondary mb-1">Receta (insumos):</div>
+                  @for (item of product.recipe; track item.insumoCode) {
+                    <span class="badge text-bg-light me-1 mb-1">{{ supplyName(item.insumoCode) }}: {{ item.quantityNeeded }}</span>
+                  }
+                </div>
+              }
+              <div class="d-flex justify-content-between align-items-center mt-auto">
+                <strong class="fs-5 text-danger">{{ product.price | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-warning" type="button" (click)="editProduct(product)">Editar</button>
+                  <button class="btn btn-outline-danger" type="button" (click)="removeProduct(product)">Eliminar</button>
+                </div>
               </div>
             </div>
           </div>
         </article>
       } @empty {
-        <div class="col-12"><div class="alert alert-warning border-0 shadow-sm" role="status">No hay productos registrados. Crea el primer producto desde este formulario.</div></div>
+        <div class="col-12">
+          <div class="alert alert-warning border-0 shadow-sm" role="status">
+            No hay productos de venta registrados. Crea el primero con el formulario de arriba.
+          </div>
+        </div>
       }
     </div>
   </section>
 
+  <!-- ===== SECCIÓN: INSUMOS ===== -->
   <section>
+    <!-- Formulario crear insumo -->
     <div class="card shadow-sm border-0 rounded-4 mb-4">
       <div class="card-body p-4">
         <div class="mb-4">
-          <h2 class="h4 text-danger mb-1">Crear nuevo insumo</h2>
-          <p class="text-secondary mb-0">Registra materia prima disponible para las recetas y el inventario.</p>
+          <h2 class="h4 text-danger fw-bold mb-1">Registrar nuevo insumo</h2>
+          <p class="text-secondary mb-0">Los insumos son la materia prima del restaurante. El stock se actualiza al registrar compras.</p>
         </div>
         <form [formGroup]="supplyForm" (ngSubmit)="createSupply()" novalidate>
           <div class="row g-3">
@@ -129,12 +146,12 @@
                 placeholder="Ej. CAR-002" autocomplete="off" required>
             </div>
             <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold" for="supplyName">Nombre</label>
+              <label class="form-label fw-semibold" for="supplyName">Nombre del insumo</label>
               <input id="supplyName" class="form-control form-control-lg" formControlName="name"
                 placeholder="Ej. Carne de cerdo" autocomplete="off" required>
             </div>
             <div class="col-12 col-md-2">
-              <label class="form-label fw-semibold" for="supplyUnit">Unidad</label>
+              <label class="form-label fw-semibold" for="supplyUnit">Unidad de medida</label>
               <select id="supplyUnit" class="form-select form-select-lg" formControlName="unitOfMeasure">
                 <option value="gramos">Gramos</option>
                 <option value="unidades">Unidades</option>
@@ -148,7 +165,6 @@
                 @for (provider of providers(); track provider.id) { @if (provider.active) { <option [ngValue]="provider.id">{{ provider.name }}</option> } }
               </select>
             </div>
-            <div class="col-12 col-md-3 d-flex align-items-end"><p class="small text-secondary mb-2">El stock se agrega registrando una compra.</p></div>
           </div>
           @if (supplyError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ supplyError }}</div> }
           @if (supplyMessage) { <div class="alert alert-success py-2 mt-3 mb-0" role="status">{{ supplyMessage }}</div> }
@@ -159,15 +175,51 @@
       </div>
     </div>
 
-    <h2 class="h4 text-danger mb-3">Existencias de insumos</h2>
-    <div class="row g-3 mb-3" aria-label="Resumen de existencias">
-      <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Disponibles</div><div class="h3 mb-0 text-success">{{ supplyCount('Disponible') }}</div></div></div></div>
-      <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Escasos</div><div class="h3 mb-0 text-warning">{{ supplyCount('Escaso') }}</div></div></div></div>
-      <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Agotados</div><div class="h3 mb-0 text-danger">{{ supplyCount('Agotado') }}</div></div></div></div>
+    <!-- Resumen de estado de existencias -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4 text-danger fw-bold mb-0">Existencias de insumos</h2>
     </div>
-    <div class="table-responsive card border-0 shadow-sm">
+    <div class="row g-3 mb-3" aria-label="Resumen de existencias">
+      <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100 rounded-4">
+          <div class="card-body">
+            <div class="small text-secondary mb-1">✅ Disponibles</div>
+            <div class="h3 mb-0 text-success fw-bold">{{ supplyCount('Disponible') }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100 rounded-4">
+          <div class="card-body">
+            <div class="small text-secondary mb-1">⚠️ Escasos (bajo mínimo)</div>
+            <div class="h3 mb-0 text-warning fw-bold">{{ supplyCount('Escaso') }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm h-100 rounded-4">
+          <div class="card-body">
+            <div class="small text-secondary mb-1">🔴 Agotados</div>
+            <div class="h3 mb-0 text-danger fw-bold">{{ supplyCount('Agotado') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de insumos (sin Costo promedio ni Último costo) -->
+    <div class="table-responsive card border-0 shadow-sm rounded-4 mb-4">
       <table class="table table-hover align-middle mb-0">
-        <thead class="table-dark"><tr><th>Código</th><th>Insumo</th><th>Proveedor preferido</th><th>Unidad</th><th>Cantidad</th><th>Costo promedio</th><th>Último costo</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+        <thead class="table-dark">
+          <tr>
+            <th>Código</th>
+            <th>Insumo</th>
+            <th>Proveedor preferido</th>
+            <th>Unidad</th>
+            <th>Stock actual</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
         <tbody>
           @for (supply of supplies(); track supply.code) {
             <tr>
@@ -175,10 +227,15 @@
               <td class="fw-semibold">{{ supply.name }}</td>
               <td>{{ providers().find(provider => provider.id === supply.preferredProviderId)?.name || '—' }}</td>
               <td>{{ supply.unitOfMeasure }}</td>
-              <td>{{ supply.quantity }}</td>
-              <td>{{ supply.averageCost ? (supply.averageCost | currency:'COP':'symbol-narrow':'1.0-2') : 'Sin costo' }}</td>
-              <td>{{ supply.lastCost ? (supply.lastCost | currency:'COP':'symbol-narrow':'1.0-2') : 'Sin costo' }}</td>
-              <td><span class="badge rounded-pill" [class.text-bg-success]="supply.status === 'Disponible'" [class.text-bg-warning]="supply.status === 'Escaso'" [class.text-bg-danger]="supply.status === 'Agotado'">{{ supply.status | titlecase }}</span></td>
+              <td class="fw-bold" [class.text-danger]="supply.status === 'Agotado'" [class.text-warning]="supply.status === 'Escaso'">{{ supply.quantity }}</td>
+              <td>
+                <span class="badge rounded-pill"
+                  [class.text-bg-success]="supply.status === 'Disponible'"
+                  [class.text-bg-warning]="supply.status === 'Escaso'"
+                  [class.text-bg-danger]="supply.status === 'Agotado'">
+                  {{ supply.status | titlecase }}
+                </span>
+              </td>
               <td class="text-end">
                 <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'Acciones para ' + supply.name">
                   <button class="btn btn-outline-warning" type="button" (click)="openEditSupply(supply)" [attr.aria-label]="'Editar ' + supply.name" title="Editar">
@@ -191,19 +248,44 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="9" class="text-center text-secondary py-4">No hay insumos registrados.</td></tr>
+            <tr><td colspan="7" class="text-center text-secondary py-4">No hay insumos registrados. Crea el primero con el formulario de arriba.</td></tr>
           }
         </tbody>
       </table>
     </div>
-    <section class="card border-0 shadow-sm mt-4">
-      <div class="card-header bg-white"><h2 class="h5 mb-0">Movimientos (kardex)</h2></div>
-      <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Fecha</th><th>Insumo</th><th>Tipo</th><th>Cantidad</th><th>Referencia</th></tr></thead><tbody>
-        @for (movement of movements(); track movement.id) { <tr><td>{{ movement.date | date:'short' }}</td><td>{{ supplyName(movement.supplyCode) }}</td><td>{{ movement.type }}</td><td [class.text-success]="movement.quantity > 0" [class.text-danger]="movement.quantity < 0">{{ movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}</td><td>{{ movement.reference }}</td></tr> } @empty { <tr><td colspan="5" class="text-center text-secondary py-3">Aún no hay movimientos registrados.</td></tr> }
-      </tbody></table></div>
+
+    <!-- Kardex de movimientos -->
+    <section class="card border-0 shadow-sm rounded-4 mt-4">
+      <div class="card-header bg-white rounded-top-4">
+        <h2 class="h5 mb-0 fw-bold">📋 Kardex — Historial de movimientos de stock</h2>
+        <p class="small text-secondary mb-0">Registro cronológico de entradas (compras) y salidas (ventas) de insumos.</p>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr><th>Fecha y hora</th><th>Insumo</th><th>Tipo de movimiento</th><th>Cantidad</th><th>Referencia</th></tr>
+          </thead>
+          <tbody>
+            @for (movement of movements(); track movement.id) {
+              <tr>
+                <td>{{ movement.date | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ supplyName(movement.supplyCode) }}</td>
+                <td class="text-capitalize">{{ movement.type }}</td>
+                <td [class.text-success]="movement.quantity > 0" [class.text-danger]="movement.quantity < 0" class="fw-semibold">
+                  {{ movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}
+                </td>
+                <td>{{ movement.reference }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="text-center text-secondary py-3">Aún no hay movimientos registrados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </section>
   </section>
 
+  <!-- ===== MODAL: EDITAR INSUMO ===== -->
   @if (editSupplyModalVisible) {
     <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editSupplyTitle">
       <div class="modal-dialog modal-dialog-centered">
@@ -215,16 +297,16 @@
           <form [formGroup]="editSupplyForm" (ngSubmit)="saveEditedSupply()" novalidate>
             <div class="modal-body">
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="editSupplyCode">Código</label>
+                <label class="form-label fw-semibold" for="editSupplyCode">Código (no editable)</label>
                 <input id="editSupplyCode" class="form-control" formControlName="code" readonly>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="editSupplyName">Nombre</label>
+                <label class="form-label fw-semibold" for="editSupplyName">Nombre del insumo</label>
                 <input id="editSupplyName" class="form-control" formControlName="name" required>
               </div>
               <div class="row g-3">
                 <div class="col-6">
-                  <label class="form-label fw-semibold" for="editSupplyUnit">Unidad</label>
+                  <label class="form-label fw-semibold" for="editSupplyUnit">Unidad de medida</label>
                   <select id="editSupplyUnit" class="form-select" formControlName="unitOfMeasure">
                     <option value="gramos">Gramos</option>
                     <option value="unidades">Unidades</option>
@@ -232,10 +314,10 @@
                   </select>
                 </div>
                 <div class="col-6">
-                  <label class="form-label fw-semibold" for="editSupplyMinimum">Mínimo</label>
+                  <label class="form-label fw-semibold" for="editSupplyMinimum">Stock mínimo (alerta)</label>
                   <input id="editSupplyMinimum" class="form-control" type="number" min="0" step="0.001" formControlName="minimumQuantity">
                 </div>
-                <div class="col-6">
+                <div class="col-12">
                   <label class="form-label fw-semibold" for="editSupplyProvider">Proveedor preferido</label>
                   <select id="editSupplyProvider" class="form-select" formControlName="preferredProviderId">
                     <option [ngValue]="0">Sin preferencia</option>
@@ -256,6 +338,7 @@
     <div class="modal-backdrop fade show"></div>
   }
 
+  <!-- ===== MODAL: ELIMINAR INSUMO ===== -->
   @if (deleteSupplyModalVisible && deletingSupply; as supply) {
     <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="deleteSupplyTitle">
       <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -264,14 +347,15 @@
             <h2 class="modal-title fs-5" id="deleteSupplyTitle">Eliminar insumo</h2>
             <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeDeleteSupply()"></button>
           </div>
-          <div class="modal-body">
-            <p class="mb-0">¿Está seguro de eliminar este insumo?</p>
-            <p class="small text-secondary mt-2 mb-0"><strong>{{ supply.code }}</strong> · {{ supply.name }}</p>
+          <div class="modal-body text-center py-4">
+            <p class="mb-1">¿Estás seguro de eliminar este insumo?</p>
+            <p class="fw-bold text-danger mb-0">{{ supply.code }} · {{ supply.name }}</p>
+            <p class="small text-secondary mt-2 mb-0">Solo puedes eliminarlo si no tiene compras ni movimientos registrados.</p>
             @if (deleteSupplyError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ deleteSupplyError }}</div> }
           </div>
-          <div class="modal-footer">
+          <div class="modal-footer justify-content-center">
             <button class="btn btn-light" type="button" (click)="closeDeleteSupply()">Cancelar</button>
-            <button class="btn btn-danger" type="button" (click)="confirmDeleteSupply()">Eliminar</button>
+            <button class="btn btn-danger" type="button" (click)="confirmDeleteSupply()">Sí, eliminar</button>
           </div>
         </div>
       </div>

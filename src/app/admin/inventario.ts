@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,7 +7,7 @@ import { Product } from '../entidades/modelos';
 
 @Component({
   selector: 'app-inventario',
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, TitleCasePipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, TitleCasePipe, ReactiveFormsModule],
   templateUrl: './inventario.html'
 })
 export class Inventario {
@@ -234,15 +234,6 @@ export class Inventario {
     this.database.removeActiveProduct(product.id);
   }
 
-  estimatedCost(product: Product): number | null {
-    const costs = product.recipe.map(item => this.supplies().find(supply => supply.code === item.insumoCode)?.averageCost ?? 0);
-    return costs.some(cost => cost <= 0) ? null : product.recipe.reduce((sum, item, index) => sum + item.quantityNeeded * costs[index], 0);
-  }
-
-  estimatedMargin(product: Product): number | null {
-    const cost = this.estimatedCost(product);
-    return cost !== null && product.price > 0 ? product.price - cost : null;
-  }
 
   recipeUnit(code: string): string {
     return this.supplies().find(supply => supply.code === code)?.unitOfMeasure ?? '';

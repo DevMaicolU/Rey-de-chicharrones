@@ -1,49 +1,80 @@
-import { CurrencyPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../servicios/auth.service';
 import { CartItem, CartService } from '../servicios/cart.service';
 import { DatabaseService, PaymentMethod } from '../servicios/database.service';
-import { FacturacionService } from '../servicios/facturacion.service';
+import { PedidosEnEsperaService, PedidoEnEspera } from '../servicios/pedidos-en-espera.service';
+import { ToastService } from '../servicios/toast.service';
 import { OrderItem } from '../entidades/modelos';
 import { IMAGEN_RESPALDO, usarImagenRespaldo } from '../util/imagen';
 
-@Component({ selector: 'app-nuevo-pedido', imports: [CurrencyPipe, FormsModule, RouterLink], templateUrl: './nuevo-pedido.html' })
+@Component({
+  selector: 'app-nuevo-pedido',
+  imports: [CurrencyPipe, DatePipe, FormsModule, RouterLink],
+  templateUrl: './nuevo-pedido.html'
+})
 export class NuevoPedido {
   private readonly database = inject(DatabaseService);
   private readonly auth = inject(AuthService);
   private readonly cart = inject(CartService);
-  private readonly router = inject(Router);
-  private readonly facturacion = inject(FacturacionService);
+  private readonly pedidosEspera = inject(PedidosEnEsperaService);
+  private readonly toast = inject(ToastService);
 
   readonly items = toSignal(this.cart.carritoActual$, { initialValue: this.cart.items });
+  readonly pedidosEnEspera = toSignal(this.pedidosEspera.pedidos$, { initialValue: [] as PedidoEnEspera[] });
   readonly imagenRespaldo = IMAGEN_RESPALDO;
   readonly manejarErrorImagen = usarImagenRespaldo;
 
+  // --- Fase A: Toma de comanda ---
   tableNumber: number | null = null;
   customerName = '';
-  paymentMethod: PaymentMethod = 'efectivo';
-  applyDiscount = false;
   error = '';
 
-  total(): number { return this.cart.total(); }
+  // --- Fase B: Edición de pedido en espera ---
+  pedidoEditando: PedidoEnEspera | null = null;
+  itemsEditando: CartItem[] = [];
+
+  // --- Fase C: Modal de cobro ---
+  modalCobroVisible = signal(false);
+  pedidoACobrar: PedidoEnEspera | null = null;
+  paymentMethod: PaymentMethod = 'efectivo';
+  applyDiscount = false;
+  errorCobro = '';
+
+  // --- Confirmación de cancelación ---
+  pedidoACancelar: PedidoEnEspera | null = null;
+  modalCancelVisible = signal(false);
+
+  // ======================= Calculos del carrito actual =======================
   subtotal(): number { return this.cart.total(); }
   discount(): number {
-    return this.facturacion.calculate(this.toOrderItems(), this.applyDiscount).discount;
+    return 0; // El descuento solo se aplica en cobro
   }
-  totalWithDiscount(): number {
-    return this.facturacion.calculate(this.toOrderItems(), this.applyDiscount).total;
+  totalCarrito(): number { return this.cart.total(); }
+
+  // ======================= Calculos para cobro =======================
+  subtotalCobro(): number {
+    if (!this.pedidoACobrar) return 0;
+    return this.pedidoACobrar.total;
+  }
+  descuentoCobro(): number {
+    if (!this.pedidoACobrar) return 0;
+    return this.applyDiscount ? Math.round(this.pedidoACobrar.total * 0.10) : 0;
+  }
+  totalCobro(): number {
+    return this.subtotalCobro() - this.descuentoCobro();
   }
 
+  // ======================= Fase A: Toma de comanda =======================
   cambiarCantidad(item: CartItem, cantidad: number): void {
     this.cart.cambiarCantidad(item.producto.id, cantidad);
   }
 
-  /** Se ejecuta al terminar de editar el campo: aplica el valor y deja en pantalla la cantidad real (≥ 1, entera). */
   editarCantidad(item: CartItem, campo: HTMLInputElement): void {
-    const valor = campo.valueAsNumber; // NaN si el campo está vacío: se conserva la cantidad actual
+    const valor = campo.valueAsNumber;
     if (!Number.isNaN(valor)) this.cart.cambiarCantidad(item.producto.id, valor);
     const actual = this.cart.items.find(i => i.producto.id === item.producto.id);
     campo.value = String(actual?.cantidad ?? item.cantidad);
@@ -53,15 +84,14 @@ export class NuevoPedido {
     this.cart.eliminarDelCarrito(item.producto.id);
   }
 
-  finalizarPedido(): void {
-    const employee = this.auth.activeUser;
+  registrarPedido(): void {
+    this.error = '';
     const cartItems = this.cart.items;
-    const mesa = this.tableNumber;
-
-    if (!employee || !cartItems.length) {
-      this.error = 'Agrega productos al pedido antes de finalizar.';
+    if (!cartItems.length) {
+      this.error = 'Agrega al menos un producto al pedido antes de registrarlo.';
       return;
     }
+    const mesa = this.tableNumber;
     if (mesa === null || !Number.isInteger(mesa) || mesa < 1) {
       this.error = 'Indica un número de mesa válido (entero mayor a 0).';
       return;
@@ -71,26 +101,150 @@ export class NuevoPedido {
       return;
     }
 
-    const resultado = this.database.registrarVenta({
-      tableNumber: mesa,
-      customerName: this.customerName.trim(),
-      employeeId: employee.id,
-      employeeName: employee.name,
-      items: this.toOrderItems(),
-      paymentMethod: this.paymentMethod,
-      applyDiscount: this.applyDiscount
-    });
-    if (!resultado.ok) {
-      this.error = resultado.error ?? 'No fue posible registrar la venta.';
-      return;
-    }
+    const pedido = this.pedidosEspera.registrar(mesa, this.customerName, cartItems);
     this.cart.limpiarCarrito();
     this.tableNumber = null;
     this.customerName = '';
+    this.error = '';
+    this.toast.exito(`Pedido de mesa ${pedido.mesa} registrado y enviado a espera.`);
+  }
+
+  // ======================= Fase B: Edición de pedido en espera =======================
+  pedidosPropios(): PedidoEnEspera[] {
+    const idEmpleado = this.auth.activeUser?.id;
+    return this.pedidosEnEspera().filter(p => p.empleadoId === idEmpleado);
+  }
+
+  abrirEdicion(pedido: PedidoEnEspera): void {
+    this.pedidoEditando = pedido;
+    this.itemsEditando = pedido.items.map(i => ({ ...i }));
+  }
+
+  cerrarEdicion(): void {
+    this.pedidoEditando = null;
+    this.itemsEditando = [];
+  }
+
+  cambiarCantidadEdicion(item: CartItem, cantidad: number): void {
+    const cant = Math.max(1, Math.floor(cantidad));
+    this.itemsEditando = this.itemsEditando.map(i =>
+      i.producto.id === item.producto.id
+        ? { ...i, cantidad: cant, subtotal: i.producto.price * cant }
+        : i
+    );
+  }
+
+  eliminarItemEdicion(item: CartItem): void {
+    this.itemsEditando = this.itemsEditando.filter(i => i.producto.id !== item.producto.id);
+  }
+
+  totalEdicion(): number {
+    return this.itemsEditando.reduce((s, i) => s + i.subtotal, 0);
+  }
+
+  guardarEdicion(): void {
+    if (!this.pedidoEditando) return;
+    if (!this.itemsEditando.length) {
+      this.toast.error('El pedido debe tener al menos un producto. Si deseas eliminarlo, usa "Cancelar pedido".');
+      return;
+    }
+    this.pedidosEspera.actualizarItems(this.pedidoEditando.id, this.itemsEditando);
+    this.toast.exito('Pedido actualizado correctamente.');
+    this.cerrarEdicion();
+  }
+
+  // ======================= Cancelar pedido =======================
+  abrirCancelacion(pedido: PedidoEnEspera): void {
+    this.pedidoACancelar = pedido;
+    this.modalCancelVisible.set(true);
+  }
+
+  cerrarCancelacion(): void {
+    this.pedidoACancelar = null;
+    this.modalCancelVisible.set(false);
+  }
+
+  confirmarCancelacion(): void {
+    if (!this.pedidoACancelar) return;
+    const mesa = this.pedidoACancelar.mesa;
+    this.pedidosEspera.eliminar(this.pedidoACancelar.id);
+    this.cerrarCancelacion();
+    this.toast.info(`Pedido de mesa ${mesa} cancelado.`);
+  }
+
+  // ======================= Fase C: Cobro =======================
+  abrirCobro(pedido: PedidoEnEspera): void {
+    this.pedidoACobrar = pedido;
     this.paymentMethod = 'efectivo';
     this.applyDiscount = false;
-    this.error = '';
-    this.router.navigateByUrl('/empleado/registros');
+    this.errorCobro = '';
+    this.modalCobroVisible.set(true);
+  }
+
+  cerrarCobro(): void {
+    this.pedidoACobrar = null;
+    this.modalCobroVisible.set(false);
+    this.errorCobro = '';
+  }
+
+  finalizarCobro(): void {
+    this.errorCobro = '';
+    const pedido = this.pedidoACobrar;
+    const employee = this.auth.activeUser;
+
+    if (!pedido || !employee) {
+      this.errorCobro = 'Error inesperado. Recarga la página e intenta de nuevo.';
+      return;
+    }
+
+    const orderItems: OrderItem[] = pedido.items.map(item => ({
+      productId: item.producto.id,
+      productName: item.producto.name,
+      quantity: item.cantidad,
+      unitPrice: item.producto.price
+    }));
+
+    const resultado = this.database.registrarVenta({
+      tableNumber: pedido.mesa,
+      customerName: pedido.cliente,
+      employeeId: employee.id,
+      employeeName: employee.name,
+      items: orderItems,
+      paymentMethod: this.paymentMethod,
+      applyDiscount: this.applyDiscount
+    });
+
+    if (!resultado.ok) {
+      this.errorCobro = resultado.error ?? 'No fue posible registrar la venta.';
+      return;
+    }
+
+    this.pedidosEspera.eliminar(pedido.id);
+    this.cerrarCobro();
+    this.toast.exito(`¡Pedido de mesa ${pedido.mesa} cobrado exitosamente!`);
+  }
+
+  // ======================= Helpers =======================
+  etiquetaEstado(estado: PedidoEnEspera['estado']): string {
+    const etiquetas: Record<PedidoEnEspera['estado'], string> = {
+      'en-espera': 'En espera',
+      'en-preparacion': 'En preparación',
+      'por-cobrar': 'Por cobrar'
+    };
+    return etiquetas[estado];
+  }
+
+  claseBadgeEstado(estado: PedidoEnEspera['estado']): string {
+    const clases: Record<PedidoEnEspera['estado'], string> = {
+      'en-espera': 'text-bg-warning',
+      'en-preparacion': 'text-bg-info',
+      'por-cobrar': 'text-bg-success'
+    };
+    return clases[estado];
+  }
+
+  cambiarEstadoPedido(pedido: PedidoEnEspera, estado: PedidoEnEspera['estado']): void {
+    this.pedidosEspera.actualizarEstado(pedido.id, estado);
   }
 
   private toOrderItems(): OrderItem[] {

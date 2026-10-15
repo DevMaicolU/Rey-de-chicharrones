@@ -1,11 +1,32 @@
+/* =====================================================
+   MANILA POS — Estilos globales
+   Paleta: rojo/carmín #dc3545, dorado #ffc107, fondo #f8f9fa
+   ===================================================== */
+
 html, body {
     background-color: #FFF8EE !important;
     font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
     scroll-behavior: smooth;
 }
 
+/* =====================================================
+   NAVBAR FIJA / PEGAJOSA (Sticky Header)
+   ===================================================== */
+.manila-navbar-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1040;
+    box-shadow: 0 2px 16px rgba(127, 21, 37, 0.20);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: box-shadow 0.25s ease;
+}
+
+/* =====================================================
+   HOVER SHADOW — Tarjetas interactivas
+   ===================================================== */
 .hover-shadow {
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow 0.22s ease, transform 0.22s ease;
 }
 
 .hover-shadow:hover {
@@ -13,6 +34,16 @@ html, body {
     box-shadow: 0 0.75rem 1.5rem rgba(127, 21, 37, 0.12) !important;
 }
 
+/* =====================================================
+   CARDS — Mejoras generales
+   ===================================================== */
+.card {
+    transition: box-shadow 0.2s ease;
+}
+
+/* =====================================================
+   TICKET PDF
+   ===================================================== */
 .ticket-shell {
     width: min(100%, 390px);
     margin-inline: auto;

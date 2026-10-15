@@ -3,6 +3,7 @@ import { Component, Input, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CartService } from '../servicios/cart.service';
 import { DatabaseService } from '../servicios/database.service';
+import { ToastService } from '../servicios/toast.service';
 import { Product } from '../entidades/modelos';
 import { IMAGEN_RESPALDO } from '../util/imagen';
 
@@ -18,6 +19,7 @@ export class TarjetaProducto {
   readonly imagenRespaldo = IMAGEN_RESPALDO;
   private readonly cart = inject(CartService);
   private readonly database = inject(DatabaseService);
+  private readonly toast = inject(ToastService);
 
   get disponible(): boolean {
     return this.producto.recipe.every(recipeItem => {
@@ -26,13 +28,31 @@ export class TarjetaProducto {
     });
   }
 
+  /** Verifica si hay stock suficiente para preparar la cantidad solicitada. */
+  get stockSuficiente(): boolean {
+    const cant = this.cantidad ?? 1;
+    return this.producto.recipe.every(recipeItem => {
+      const supply = this.database.supplies.find(s => s.code === recipeItem.insumoCode);
+      return !!supply && supply.quantity >= recipeItem.quantityNeeded * cant;
+    });
+  }
+
   get cantidadValida(): boolean {
     return this.cantidad !== null && Number.isFinite(this.cantidad) && this.cantidad >= 1;
   }
 
   agregarAlCarrito(): void {
-    if (!this.cantidadValida || !this.disponible) return;
+    if (!this.cantidadValida) return;
+    if (!this.disponible) {
+      this.toast.advertencia(`Stock insuficiente de insumos para preparar "${this.producto.name}".`);
+      return;
+    }
+    if (!this.stockSuficiente) {
+      this.toast.advertencia(`No hay suficientes insumos para preparar ${this.cantidad} unidad(es) de "${this.producto.name}".`);
+      return;
+    }
     this.cart.agregarAlCarrito(this.producto, this.cantidad as number);
+    this.toast.exito(`¡${this.producto.name} añadido al pedido correctamente!`);
     this.cantidad = 1;
   }
 
