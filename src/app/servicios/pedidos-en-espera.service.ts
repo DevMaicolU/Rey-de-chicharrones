@@ -9,6 +9,7 @@ export interface PedidoEnEspera {
   id: string;
   mesa: number;
   cliente: string;
+  cedulaCliente: string;
   hora: string;
   estado: EstadoPedidoEnEspera;
   items: CartItem[];
@@ -31,12 +32,13 @@ export class PedidosEnEsperaService {
     return this.pedidos.filter(p => p.empleadoId === idEmpleado);
   }
 
-  registrar(mesa: number, cliente: string, items: CartItem[]): PedidoEnEspera {
+  registrar(mesa: number, cliente: string, cedulaCliente: string, items: CartItem[]): PedidoEnEspera {
     const empleado = this.auth.activeUser!;
     const pedido: PedidoEnEspera = {
       id: `pedido-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       mesa,
       cliente: cliente.trim(),
+      cedulaCliente: cedulaCliente.trim(),
       hora: new Date().toISOString(),
       estado: 'en-espera',
       items: items.map(item => ({ ...item })),

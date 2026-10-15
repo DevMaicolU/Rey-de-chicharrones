@@ -59,6 +59,7 @@ export class Proveedores {
   suppliedBy(providerId: number) { return this.database.suppliesOfProvider(providerId); }
   toggle(provider: Provider): void { this.database.setProviderActive(provider.id, !provider.active); }
   remove(provider: Provider): void {
+    if (!window.confirm(`¿Estás seguro de eliminar al proveedor "${provider.name}"? Esta acción no se puede deshacer.`)) return;
     const result = this.database.deleteProvider(provider.id);
     this.error = result.error ?? '';
   }

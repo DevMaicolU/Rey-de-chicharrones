@@ -91,11 +91,13 @@
         <section class="card rounded-4 border-0 shadow-sm">
           <div class="card-body p-4">
             <h3 class="h5 text-danger fw-bold mb-1">Datos de la mesa</h3>
-            <p class="text-secondary small mb-4">Solo necesitas la mesa y el nombre del cliente para registrar la comanda.</p>
+            <p class="text-secondary small mb-4">La cédula permite identificar la factura sin pedir datos durante el cobro.</p>
             <label class="form-label fw-semibold" for="tableNumber">Número de mesa</label>
             <input id="tableNumber" class="form-control mb-3" type="number" min="1" step="1" placeholder="Ej: 5" [(ngModel)]="tableNumber">
             <label class="form-label fw-semibold" for="customerName">Nombre del cliente</label>
             <input id="customerName" class="form-control mb-4" placeholder="Ej: Sebastián G." [(ngModel)]="customerName">
+            <label class="form-label fw-semibold" for="customerCedula">Cédula del cliente</label>
+            <input id="customerCedula" class="form-control mb-4" inputmode="numeric" pattern="[0-9]{6,12}" maxlength="12" placeholder="Ej: 1020304050" [(ngModel)]="customerCedula">
             @if (error) {
               <div class="alert alert-danger rounded-3 py-2 mb-3" role="alert">{{ error }}</div>
             }
@@ -208,6 +210,19 @@
                         <input class="form-control text-center" type="number" min="1" [value]="item.cantidad" (change)="cambiarCantidadEdicion(item, +$any($event.target).value)">
                         <button class="btn btn-outline-danger" type="button" (click)="cambiarCantidadEdicion(item, item.cantidad + 1)">+</button>
                       </div>
+                      <div class="border-top mt-3 pt-3">
+                        <h3 class="h6 text-danger fw-bold">Agregar desde el menú</h3>
+                        <div class="row row-cols-1 row-cols-md-2 g-2">
+                          @for (producto of menu(); track producto.id) {
+                            <div class="col">
+                              <button class="btn btn-outline-danger w-100 text-start d-flex justify-content-between align-items-center" type="button" (click)="agregarProductoEdicion(producto)">
+                                <span>{{ producto.name }} <small class="text-secondary">({{ producto.type }})</small></span>
+                                <span class="fw-semibold">{{ producto.price | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      </div>
                     </td>
                     <td class="fw-bold">{{ item.subtotal | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
                     <td><button class="btn btn-sm btn-link text-danger" type="button" (click)="eliminarItemEdicion(item)">Quitar</button></td>
@@ -272,6 +287,7 @@
           <!-- Resumen del pedido -->
           <h3 class="h6 fw-bold text-danger border-bottom pb-2 mb-3">Resumen del pedido</h3>
           <div class="mb-1 small text-secondary">Cliente: <strong class="text-dark">{{ pedidoACobrar.cliente }}</strong></div>
+          <div class="mb-3 small text-secondary">Cédula: <strong class="text-dark">{{ pedidoACobrar.cedulaCliente }}</strong></div>
           <ul class="list-unstyled small mb-3">
             @for (item of pedidoACobrar.items; track item.producto.id) {
               <li class="d-flex justify-content-between py-1 border-bottom">

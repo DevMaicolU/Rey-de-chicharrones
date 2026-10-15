@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, map, distinctUntilChanged } from 'rxjs';
 import { Product } from '../entidades/modelos';
+import { DatabaseService } from './database.service';
 
 export interface CartItem {
   producto: Product;
@@ -17,6 +18,7 @@ function aEntero(valor: unknown): number | null {
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
+  private readonly database = inject(DatabaseService);
   private readonly carritoSubject = new BehaviorSubject<CartItem[]>([]);
   readonly carritoActual$ = this.carritoSubject.asObservable();
   readonly totalItems$ = this.carritoActual$.pipe(
@@ -29,8 +31,9 @@ export class CartService {
   agregarAlCarrito(producto: Product, cantidad: number): void {
     const cantidadSegura = aEntero(cantidad);
     if (cantidadSegura === null || cantidadSegura < 1) return; // agregar 0 (o menos) no tiene sentido
-
-    const existe = this.items.some(item => item.producto.id === producto.id);
+    const existente = this.items.find(item => item.producto.id === producto.id);
+    if (!this.database.stockSuficiente(producto, cantidadSegura, existente?.cantidad ?? 0)) return;
+    const existe = !!existente;
     if (existe) {
       this.carritoSubject.next(this.items.map(item => item.producto.id === producto.id
         ? this.crearItem(item.producto, item.cantidad + cantidadSegura)

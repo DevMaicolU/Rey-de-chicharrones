@@ -3,6 +3,8 @@ import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DatabaseService, OrderRecord, Purchase } from '../servicios/database.service';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 @Component({
   selector: 'app-reportes',
@@ -30,9 +32,15 @@ export class Reportes {
 
   totalIngresos(): number { return this.filteredOrders().reduce((total, order) => total + order.total, 0); }
   totalPedidos(): number { return this.filteredOrders().length; }
-  promedioVenta(): number {
-    const orders = this.filteredOrders();
-    return orders.length ? this.totalIngresos() / orders.length : 0;
+  async descargarFacturaPdf(order: OrderRecord): Promise<void> {
+    const ticket = document.getElementById(`admin-ticket-pdf-${order.id}`);
+    if (!ticket) return;
+    const canvas = await html2canvas(ticket, { backgroundColor: '#fffdf8', scale: 2, useCORS: true });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const margin = 15;
+    const width = pdf.internal.pageSize.getWidth() - margin * 2;
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, width, (canvas.height * width) / canvas.width);
+    pdf.save(`Factura_RoyalSoft_Pedido_${order.id}.pdf`);
   }
   filteredPurchases(): Purchase[] {
     const start = this.startDate ? new Date(`${this.startDate}T00:00:00`).getTime() : -Infinity;

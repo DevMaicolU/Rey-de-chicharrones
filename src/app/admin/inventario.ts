@@ -231,6 +231,7 @@ export class Inventario {
   }
 
   removeProduct(product: Product): void {
+    if (!window.confirm(`¿Estás seguro de eliminar "${product.name}"? Se retirará del menú activo.`)) return;
     this.database.removeActiveProduct(product.id);
   }
 

@@ -87,6 +87,8 @@ export interface OrderRecord extends Order {
   orderId: number;
   table: number;
   clientName: string;
+  clientCedula?: string;
+  customerCedula?: string;
   products: OrderItem[];
   status: OrderStatus;
   date: string;
@@ -104,6 +106,7 @@ export interface Resultado {
 export interface VentaInput {
   tableNumber: number;
   customerName: string;
+  customerCedula?: string;
   employeeId: number;
   employeeName: string;
   items: OrderItem[];
@@ -447,6 +450,7 @@ export class DatabaseService {
       !Number.isInteger(input.tableNumber) ||
       input.tableNumber < 1 ||
       !input.customerName.trim() ||
+      (input.customerCedula !== undefined && !/^\d{6,12}$/.test(input.customerCedula.trim())) ||
       !Number.isInteger(input.employeeId) ||
       !input.employeeName.trim() ||
       !Array.isArray(input.items) ||
@@ -541,6 +545,7 @@ export class DatabaseService {
     const order = this.persistOrder({
       tableNumber: input.tableNumber,
       customerName: input.customerName.trim(),
+      customerCedula: input.customerCedula?.trim(),
       employeeId: input.employeeId,
       employeeName: input.employeeName.trim(),
       items: validatedItems,
@@ -562,6 +567,15 @@ export class DatabaseService {
     this.saveState();
 
     return { ok: true, invoice, order };
+  }
+
+  /** Comprueba el inventario disponible para preparar un producto sin mutar el estado. */
+  stockSuficiente(product: Product, quantity: number, reservedQuantity = 0): boolean {
+    if (!Number.isInteger(quantity) || quantity < 1) return false;
+    return product.recipe.every(recipeItem => {
+      const supply = this.supplies.find(item => item.code === recipeItem.insumoCode);
+      return !!supply && supply.quantity >= recipeItem.quantityNeeded * (quantity + reservedQuantity);
+    });
   }
 
   createPurchase(input: Omit<Purchase, 'purchaseId' | 'providerName' | 'status' | 'total' | 'receivedDate'>, receiveNow: boolean): Resultado & { purchase?: Purchase } {
@@ -667,7 +681,7 @@ export class DatabaseService {
 
   private persistOrder(
     order: Omit<Order, 'id' | 'createdAt'> &
-      Partial<Pick<OrderRecord, 'status' | 'paymentMethod' | 'discountApplied' | 'subtotal' | 'discount'>>
+      Partial<Pick<OrderRecord, 'status' | 'paymentMethod' | 'discountApplied' | 'subtotal' | 'discount' | 'customerCedula'>>
   ): OrderRecord {
     const id = this.nextId(this.orders);
     const date = new Date().toISOString();
@@ -677,6 +691,7 @@ export class DatabaseService {
       orderId: id,
       table: order.tableNumber,
       clientName: order.customerName,
+      clientCedula: order.customerCedula,
       products: order.items.map(item => ({ ...item })),
       status: order.status ?? 'completado',
       date,

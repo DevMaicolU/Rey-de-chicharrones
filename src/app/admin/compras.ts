@@ -29,11 +29,13 @@ export class Compras {
   lineTotal(index: number): number { const value = this.lines.at(index).getRawValue(); return value.packages * value.packageCost; }
   total(): number { return this.lines.controls.reduce((sum, _, index) => sum + this.lineTotal(index), 0); }
   receive(purchaseId: number): void {
+    if (!window.confirm('¿Estás seguro de recibir esta compra? Esta acción actualizará las existencias del inventario.')) return;
     const result = this.database.receivePurchase(purchaseId);
     this.error = result.error ?? '';
     this.message = result.ok ? 'Compra recibida y existencias actualizadas.' : '';
   }
   cancel(purchaseId: number): void {
+    if (!window.confirm('¿Estás seguro de anular esta compra? No se podrá recibir posteriormente.')) return;
     const result = this.database.cancelPurchase(purchaseId);
     this.error = result.error ?? '';
     this.message = result.ok ? 'Pedido anulado correctamente.' : '';

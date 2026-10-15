@@ -31,10 +31,8 @@ export class TarjetaProducto {
   /** Verifica si hay stock suficiente para preparar la cantidad solicitada. */
   get stockSuficiente(): boolean {
     const cant = this.cantidad ?? 1;
-    return this.producto.recipe.every(recipeItem => {
-      const supply = this.database.supplies.find(s => s.code === recipeItem.insumoCode);
-      return !!supply && supply.quantity >= recipeItem.quantityNeeded * cant;
-    });
+    const reservado = this.cart.items.find(item => item.producto.id === this.producto.id)?.cantidad ?? 0;
+    return this.database.stockSuficiente(this.producto, cant, reservado);
   }
 
   get cantidadValida(): boolean {

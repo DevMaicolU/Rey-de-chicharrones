@@ -40,8 +40,8 @@
     @for (ticket of misPedidos(); track ticket.id) {
     <section class="ticket-shell" [id]="'ticket-pdf-' + ticket.id" aria-label="Factura electrónica">
       <div class="ticket-header text-center">
-        <div class="ticket-brand">MANILA</div>
-        <div class="small">Restaurante Manila S.A.S.</div>
+        <div class="ticket-brand">ROYALSOFT</div>
+        <div class="small">Restaurante RoyalSoft S.A.S.</div>
         <div class="small">NIT 901.234.567-8</div>
         <div class="ticket-rule"></div>
         <div class="small">FACTURA ELECTRÓNICA #{{ ticket.orderId }}</div>
@@ -49,7 +49,9 @@
       <div class="ticket-meta small">
         <div><strong>Fecha:</strong> {{ ticket.date | date:'dd/MM/yyyy HH:mm' }}</div>
         <div><strong>Cliente:</strong> {{ ticket.clientName }}</div>
+        <div><strong>Cédula:</strong> {{ ticket.clientCedula || 'No registrada' }}</div>
         <div><strong>Mesa:</strong> {{ ticket.table }}</div>
+        <div><strong>Empleado:</strong> {{ ticket.employeeName }}</div>
         <div><strong>Pago:</strong> <span class="text-capitalize">{{ ticket.paymentMethod || 'Efectivo' }}</span></div>
       </div>
       <div class="ticket-rule"></div>
