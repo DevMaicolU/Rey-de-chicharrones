@@ -1,7 +1,7 @@
 <div class="container">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div>
-      <h1 class="h2 text-danger mb-1">Gestión de Usuarios</h1>
+      <h1 class="h2 text-danger fw-bold mb-1">Gestión de Usuarios</h1>
       <p class="text-secondary mb-0">Administra las cuentas de administradores y empleados.</p>
     </div>
     <button class="btn btn-danger" type="button" (click)="openCreateModal()">
@@ -57,7 +57,7 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
           <div class="modal-header bg-danger text-white">
-            <h2 class="modal-title fs-5" id="createUserTitle">Registrar nuevo usuario</h2>
+            <h2 class="modal-title fs-5 fw-bold" id="createUserTitle">Registrar nuevo usuario</h2>
             <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeCreateModal()"></button>
           </div>
           <form [formGroup]="createForm" (ngSubmit)="createUser()" novalidate>
@@ -97,7 +97,7 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
           <div class="modal-header bg-danger text-white">
-            <h2 class="modal-title fs-5" id="editUserTitle">Editar usuario</h2>
+            <h2 class="modal-title fs-5 fw-bold" id="editUserTitle">Editar usuario</h2>
             <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeEditModal()"></button>
           </div>
           <form [formGroup]="editForm" (ngSubmit)="updateUser()" novalidate>
@@ -134,7 +134,7 @@
       <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow">
           <div class="modal-header bg-danger text-white">
-            <h2 class="modal-title fs-5" id="deleteUserTitle">Eliminar usuario</h2>
+            <h2 class="modal-title fs-5 fw-bold" id="deleteUserTitle">Eliminar usuario</h2>
             <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeDeleteModal()"></button>
           </div>
           <div class="modal-body">

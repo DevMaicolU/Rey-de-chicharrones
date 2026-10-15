@@ -2,7 +2,7 @@
   <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
     <div>
       <span class="text-uppercase small fw-bold text-warning-emphasis">Inteligencia comercial</span>
-      <h1 class="h2 text-danger mb-1">Reporte de ventas</h1>
+      <h1 class="h2 text-danger fw-bold mb-1">Reporte de ventas</h1>
       <p class="text-secondary mb-0">Consulta pedidos completados e ingresos por periodo.</p>
     </div>
     <button class="btn btn-outline-secondary" type="button" (click)="clearFilters()">Limpiar filtros</button>
@@ -61,21 +61,67 @@
     </div>
   }
   <section class="card border-0 shadow-sm mt-4">
-    <div class="card-header bg-white"><h2 class="h5 mb-0">Compras del periodo</h2></div>
+    <div class="card-header bg-white"><h2 class="h5 text-danger fw-bold mb-0">Compras del periodo</h2></div>
     <div class="card-body">
       <div class="row g-3"><div class="col-md-6"><div class="small text-secondary">Total comprado</div><div class="h3 text-danger">{{ totalCompras() | currency:'COP':'symbol-narrow':'1.0-0' }}</div></div><div class="col-md-6"><div class="small text-secondary">Comparación</div><div>Ingresos: <strong>{{ totalIngresos() | currency:'COP':'symbol-narrow':'1.0-0' }}</strong> · Gastos: <strong>{{ totalCompras() | currency:'COP':'symbol-narrow':'1.0-0' }}</strong></div></div></div>
-      <hr><h3 class="h6">Total por proveedor</h3>
+      <hr><h3 class="h6 text-danger fw-bold">Total por proveedor</h3>
       <ul class="list-group list-group-flush">@for (provider of comprasPorProveedor(); track provider.name) {<li class="list-group-item d-flex justify-content-between px-0"><span>{{ provider.name }}</span><strong>{{ provider.total | currency:'COP':'symbol-narrow':'1.0-0' }}</strong></li>} @empty {<li class="list-group-item px-0 text-secondary">No hay compras recibidas en el periodo.</li>}</ul>
     </div>
   </section>
   <div class="ticket-pdf-host" aria-hidden="true">
     @for (ticket of filteredOrders(); track ticket.id) {
-      <section class="ticket-shell" [id]="'admin-ticket-pdf-' + ticket.id">
-        <div class="ticket-header text-center"><div class="ticket-brand">REY DE LOS CHICHARRONES</div><div class="small fw-semibold">Rey de los chicharrones S.A.S.</div><div class="small">Factura electrónica #{{ ticket.orderId }}</div><div class="ticket-rule"></div></div>
-        <div class="ticket-meta small"><div><strong>Fecha:</strong> {{ ticket.date | date:'dd/MM/yyyy HH:mm' }}</div><div><strong>Cliente:</strong> {{ ticket.clientName }}</div><div><strong>Cédula:</strong> {{ ticket.clientCedula || 'No registrada' }}</div><div><strong>Empleado:</strong> {{ ticket.employeeName }}</div><div><strong>Mesa:</strong> {{ ticket.table }}</div></div>
+      <section class="ticket-shell" [id]="'admin-ticket-pdf-' + ticket.id" aria-label="Factura electrónica">
+        <div class="ticket-header text-center">
+          <div class="ticket-brand">RoyalSoft</div>
+          <div class="ticket-subtitle">El rey de los chicharrones S.A.S.</div>
+          <div class="small text-secondary">NIT 901.234.567-8</div>
+          <div class="ticket-rule"></div>
+          <div class="ticket-factura-num">FACTURA ELECTRÓNICA #{{ ticket.orderId }}</div>
+        </div>
+        <div class="ticket-meta small">
+          <div><strong>Fecha:</strong> {{ ticket.date | date:'dd/MM/yyyy HH:mm' }}</div>
+          <div><strong>Cliente:</strong> {{ ticket.clientName }}</div>
+          <div><strong>Cédula:</strong> {{ ticket.clientCedula || 'No registrada' }}</div>
+          <div><strong>Mesa:</strong> {{ ticket.table }}</div>
+          <div><strong>Empleado:</strong> {{ ticket.employeeName }}</div>
+          <div><strong>Pago:</strong> <span class="text-capitalize">{{ ticket.paymentMethod || 'Efectivo' }}</span></div>
+        </div>
         <div class="ticket-rule"></div>
-        @for (item of ticket.products; track item.productId) { <div class="d-flex justify-content-between gap-3"><span>{{ item.quantity }} x {{ item.productName }}</span><span>{{ item.unitPrice * item.quantity | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div> }
-        <div class="ticket-rule"></div><div class="d-flex justify-content-between"><span>TOTAL</span><strong>{{ ticket.total | currency:'COP':'symbol-narrow':'1.0-0' }}</strong></div>
+        <div class="ticket-items">
+          @for (item of ticket.products; track item.productId) {
+            <div class="d-flex justify-content-between gap-3">
+              <span>{{ item.quantity }} x {{ item.productName }}</span>
+              <span>{{ item.unitPrice * item.quantity | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+          }
+        </div>
+        <div class="ticket-rule"></div>
+        <div class="d-flex justify-content-between">
+          <span class="fw-semibold">Subtotal</span>
+          <span class="fw-semibold">{{ calcularSubtotal(ticket) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+        @if (calcularDescuento(ticket) > 0) {
+          <div class="d-flex justify-content-between ticket-discount">
+            <span>Descuento 10%</span>
+            <span>-{{ calcularDescuento(ticket) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        }
+        <div class="d-flex justify-content-between ticket-total mt-2">
+          <span>TOTAL</span>
+          <span>{{ ticket.total | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+        @if (ticket.amountPaid) {
+          <div class="d-flex justify-content-between small mt-1 ticket-received">
+            <span>Recibido:</span>
+            <span>{{ ticket.amountPaid | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="d-flex justify-content-between small ticket-change">
+            <span>Cambio:</span>
+            <span>{{ calcularCambio(ticket) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        }
+        <div class="ticket-rule"></div>
+        <div class="text-center small text-secondary">¡Gracias por tu visita!</div>
       </section>
     }
   </div>

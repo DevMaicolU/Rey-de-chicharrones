@@ -1,7 +1,7 @@
 <div class="container">
   <div class="mb-4">
     <span class="badge text-bg-warning mb-2">HISTORIAL</span>
-    <h1 class="h2 text-danger mb-1">Mis Registros</h1>
+    <h1 class="h2 text-danger fw-bold mb-1">Mis Registros</h1>
     <p class="text-secondary mb-0">Consulta tus ventas y descarga el comprobante electrónico.</p>
   </div>
   <div class="card border-0 shadow-sm">
@@ -40,11 +40,11 @@
     @for (ticket of misPedidos(); track ticket.id) {
     <section class="ticket-shell" [id]="'ticket-pdf-' + ticket.id" aria-label="Factura electrónica">
       <div class="ticket-header text-center">
-        <div class="ticket-brand">REY DE LOS CHICHARRONES</div>
-        <div class="small fw-semibold">Rey de los chicharrones S.A.S.</div>
-        <div class="small">NIT 901.234.567-8</div>
+        <div class="ticket-brand">RoyalSoft</div>
+        <div class="ticket-subtitle">El rey de los chicharrones S.A.S.</div>
+        <div class="small text-secondary">NIT 901.234.567-8</div>
         <div class="ticket-rule"></div>
-        <div class="small">FACTURA ELECTRÓNICA #{{ ticket.orderId }}</div>
+        <div class="ticket-factura-num">FACTURA ELECTRÓNICA #{{ ticket.orderId }}</div>
       </div>
       <div class="ticket-meta small">
         <div><strong>Fecha:</strong> {{ ticket.date | date:'dd/MM/yyyy HH:mm' }}</div>
@@ -64,15 +64,32 @@
         }
       </div>
       <div class="ticket-rule"></div>
-      <div class="d-flex justify-content-between"><span>Subtotal</span><span>{{ ticket.subtotal ?? ticket.total | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div>
-      @if (ticket.discount) { <div class="d-flex justify-content-between text-success"><span>Descuento 10%</span><span>-{{ ticket.discount | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div> }
-      <div class="d-flex justify-content-between ticket-total mt-2"><span>TOTAL</span><span>{{ ticket.total | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div>
+      <div class="d-flex justify-content-between">
+        <span class="fw-semibold">Subtotal</span>
+        <span class="fw-semibold">{{ calcularSubtotal(ticket) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+      </div>
+      @if (calcularDescuento(ticket) > 0) {
+        <div class="d-flex justify-content-between ticket-discount">
+          <span>Descuento 10%</span>
+          <span>-{{ calcularDescuento(ticket) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+      }
+      <div class="d-flex justify-content-between ticket-total mt-2">
+        <span>TOTAL</span>
+        <span>{{ ticket.total | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+      </div>
       @if (ticket.amountPaid) {
-        <div class="d-flex justify-content-between small mt-1"><span>Recibido:</span><span>{{ ticket.amountPaid | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div>
-        <div class="d-flex justify-content-between small text-success fw-bold"><span>Cambio:</span><span>{{ (ticket.change ?? 0) | currency:'COP':'symbol-narrow':'1.0-0' }}</span></div>
+        <div class="d-flex justify-content-between small mt-1 ticket-received">
+          <span>Recibido:</span>
+          <span>{{ ticket.amountPaid | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+        <div class="d-flex justify-content-between small ticket-change">
+          <span>Cambio:</span>
+          <span>{{ calcularCambio(ticket) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        </div>
       }
       <div class="ticket-rule"></div>
-      <div class="text-center small">¡Gracias por tu visita!</div>
+      <div class="text-center small text-secondary">¡Gracias por tu visita!</div>
     </section>
     }
   </div>

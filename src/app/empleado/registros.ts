@@ -25,6 +25,26 @@ export class Registros {
     return pedido.products.map(item => `${item.quantity}× ${item.productName}`).join(', ');
   }
 
+  calcularSubtotal(order: OrderRecord): number {
+    if (order.subtotal != null && order.subtotal > 0) return order.subtotal;
+    const items = order.products || order.items || [];
+    return items.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
+  }
+
+  calcularDescuento(order: OrderRecord): number {
+    if (order.discount != null && order.discount > 0) return order.discount;
+    const subtotal = this.calcularSubtotal(order);
+    return Math.max(0, subtotal - order.total);
+  }
+
+  calcularCambio(order: OrderRecord): number {
+    if (order.change != null) return order.change;
+    if (order.amountPaid != null && order.amountPaid >= order.total) {
+      return order.amountPaid - order.total;
+    }
+    return 0;
+  }
+
   async descargarFacturaPdf(order: OrderRecord): Promise<void> {
     const ticket = document.getElementById(`ticket-pdf-${order.id}`);
     if (!ticket) {
@@ -43,7 +63,7 @@ export class Registros {
       const width = pdf.internal.pageSize.getWidth() - margin * 2;
       const height = (canvas.height * width) / canvas.width;
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, width, height);
-      pdf.save(`Factura_Rey_De_Los_Chicharrones_Pedido_${order.id}.pdf`);
+      pdf.save(`Factura_El_Rey_De_Los_Chicharrones_Pedido_${order.id}.pdf`);
     } catch (error) {
       console.error(`No fue posible generar la factura del pedido ${order.id}.`, error);
     }

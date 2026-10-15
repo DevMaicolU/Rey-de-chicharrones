@@ -1231,12 +1231,22 @@ export class DatabaseService {
   }
 
   private normalizeOrder(order: OrderRecord): OrderRecord {
+    const products = order.products ?? order.items ?? [];
+    const subtotal = order.subtotal ?? products.reduce((acc, p) => acc + (p.unitPrice * p.quantity), 0);
+    const discount = order.discount ?? Math.max(0, subtotal - (order.total || 0));
+    const amountPaid = order.amountPaid;
+    const change = order.change ?? (amountPaid != null && amountPaid >= (order.total || 0) ? amountPaid - (order.total || 0) : undefined);
+
     return {
       ...order,
       orderId: order.orderId ?? order.id,
       table: order.table ?? order.tableNumber,
       clientName: order.clientName ?? order.customerName,
-      products: order.products ?? order.items,
+      products,
+      subtotal,
+      discount: discount > 0 ? discount : undefined,
+      amountPaid,
+      change,
       status: order.status ?? 'completado',
       date: order.date ?? order.createdAt
     };

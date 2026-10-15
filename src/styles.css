@@ -310,7 +310,7 @@ main.bg-light {
 }
 
 /* =====================================================
-   TICKET PDF / FACTURA (SIEMPRE BLANCA, INMUNE AL TEMA OSCURO)
+   TICKET PDF / FACTURA (FONDO BLANCO PERMANENTE, COLORES VIVOS Y LLAMATIVOS)
    ===================================================== */
 .ticket-shell,
 [data-bs-theme="dark"] .ticket-shell,
@@ -329,36 +329,6 @@ main.bg-light {
     transition: none !important;
 }
 
-.ticket-shell *,
-[data-bs-theme="dark"] .ticket-shell *,
-.dark-theme .ticket-shell * {
-    color: #212529 !important;
-    background-color: transparent !important;
-}
-
-.ticket-shell .text-success,
-[data-bs-theme="dark"] .ticket-shell .text-success,
-.dark-theme .ticket-shell .text-success {
-    color: #198754 !important;
-}
-
-.ticket-shell .ticket-brand,
-[data-bs-theme="dark"] .ticket-shell .ticket-brand,
-.dark-theme .ticket-shell .ticket-brand,
-.ticket-shell .ticket-total,
-[data-bs-theme="dark"] .ticket-shell .ticket-total,
-.dark-theme .ticket-shell .ticket-total {
-    color: #dc3545 !important;
-    font-weight: 800 !important;
-}
-
-.ticket-shell .ticket-rule,
-[data-bs-theme="dark"] .ticket-shell .ticket-rule,
-.dark-theme .ticket-shell .ticket-rule {
-    margin: 0.8rem 0;
-    border-top: 1px dashed #b0b8c4 !important;
-}
-
 .ticket-pdf-host {
     position: absolute;
     top: 0;
@@ -367,22 +337,125 @@ main.bg-light {
     pointer-events: none;
 }
 
-.ticket-brand {
+.ticket-brand,
+.ticket-shell .ticket-brand,
+[data-bs-theme="dark"] .ticket-shell .ticket-brand,
+.dark-theme .ticket-shell .ticket-brand {
+    color: #dc3545 !important;
     font-family: 'Poppins', system-ui, sans-serif;
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+    font-size: 1.65rem;
+    font-weight: 800 !important;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    margin-bottom: 0.2rem;
+}
+
+.ticket-subtitle,
+.ticket-shell .ticket-subtitle,
+[data-bs-theme="dark"] .ticket-shell .ticket-subtitle,
+.dark-theme .ticket-shell .ticket-subtitle {
+    color: #dc3545 !important;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.2rem;
+}
+
+.ticket-factura-num,
+.ticket-shell .ticket-factura-num,
+[data-bs-theme="dark"] .ticket-shell .ticket-factura-num,
+.dark-theme .ticket-shell .ticket-factura-num {
+    color: #dc3545 !important;
+    font-weight: 800 !important;
+    font-size: 0.84rem;
+    letter-spacing: 0.04em;
+}
+
+.ticket-rule,
+.ticket-shell .ticket-rule,
+[data-bs-theme="dark"] .ticket-shell .ticket-rule,
+.dark-theme .ticket-shell .ticket-rule {
+    margin: 0.8rem 0;
+    border-top: 1px dashed #b0b8c4 !important;
 }
 
 .ticket-meta {
     line-height: 1.7;
+    color: #212529 !important;
+}
+
+.ticket-meta div,
+.ticket-meta strong,
+.ticket-meta span {
+    color: #212529 !important;
 }
 
 .ticket-items {
     line-height: 1.8;
+    color: #212529 !important;
 }
 
-.ticket-total {
-    font-size: 1.05rem;
-    font-weight: 800;
+.ticket-items div,
+.ticket-items span {
+    color: #212529 !important;
+}
+
+.ticket-discount,
+.ticket-shell .ticket-discount,
+.ticket-shell .text-success,
+[data-bs-theme="dark"] .ticket-shell .ticket-discount,
+[data-bs-theme="dark"] .ticket-shell .text-success,
+.dark-theme .ticket-shell .ticket-discount,
+.dark-theme .ticket-shell .text-success {
+    color: #198754 !important;
+    font-weight: 700 !important;
+}
+
+.ticket-discount span,
+.ticket-shell .ticket-discount span,
+.ticket-shell .text-success span {
+    color: #198754 !important;
+}
+
+.ticket-total,
+.ticket-shell .ticket-total,
+[data-bs-theme="dark"] .ticket-shell .ticket-total,
+.dark-theme .ticket-shell .ticket-total {
+    color: #dc3545 !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em;
+}
+
+.ticket-total span,
+.ticket-total strong,
+.ticket-shell .ticket-total span {
+    color: #dc3545 !important;
+}
+
+.ticket-received,
+.ticket-shell .ticket-received,
+[data-bs-theme="dark"] .ticket-shell .ticket-received,
+.dark-theme .ticket-shell .ticket-received {
+    color: #495057 !important;
+}
+
+.ticket-received span {
+    color: #495057 !important;
+}
+
+.ticket-change,
+.ticket-shell .ticket-change,
+[data-bs-theme="dark"] .ticket-shell .ticket-change,
+.dark-theme .ticket-shell .ticket-change {
+    color: #198754 !important;
+    font-size: 0.98rem !important;
+    font-weight: 800 !important;
+}
+
+.ticket-change span,
+.ticket-shell .ticket-change span {
+    color: #198754 !important;
 }

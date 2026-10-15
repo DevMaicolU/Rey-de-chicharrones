@@ -52,4 +52,36 @@ describe('Registros', () => {
     expect(filasVista).toHaveLength(1);
     expect(filasVista[0].textContent).toContain('No tienes pedidos registrados');
   });
+
+  it('calcula correctamente subtotal, descuento y cambio para facturas nuevas y antiguas', () => {
+    const fixture = render();
+    const comp = fixture.componentInstance;
+
+    // Pedido antiguo sin subtotal ni discount ni change explícitos
+    const ordenVieja = {
+      id: 10,
+      orderId: 10,
+      tableNumber: 2,
+      table: 2,
+      customerName: 'Carlos',
+      clientName: 'Carlos',
+      employeeId: 2,
+      employeeName: 'empleado',
+      createdAt: new Date().toISOString(),
+      date: new Date().toISOString(),
+      status: 'completado' as const,
+      products: [
+        { productId: 'p1', productName: 'Bandeja', quantity: 2, unitPrice: 20000 }
+      ],
+      items: [
+        { productId: 'p1', productName: 'Bandeja', quantity: 2, unitPrice: 20000 }
+      ],
+      total: 36000, // tenía 4000 de descuento implícito
+      amountPaid: 50000
+    };
+
+    expect(comp.calcularSubtotal(ordenVieja)).toBe(40000);
+    expect(comp.calcularDescuento(ordenVieja)).toBe(4000);
+    expect(comp.calcularCambio(ordenVieja)).toBe(14000);
+  });
 });

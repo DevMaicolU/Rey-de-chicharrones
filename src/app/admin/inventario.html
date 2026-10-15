@@ -266,7 +266,7 @@
     <!-- Kardex de movimientos con espaciado mejorado -->
     <section class="card border-0 shadow-sm rounded-4 mt-5" style="margin-top: 2.75rem !important;">
       <div class="card-header bg-white rounded-top-4 py-3">
-        <h2 class="h5 mb-0 fw-bold">📋 Kardex — Historial de movimientos de stock</h2>
+        <h2 class="h5 mb-0 text-danger fw-bold">📋 Kardex — Historial de movimientos de stock</h2>
         <p class="small text-secondary mb-0">Registro cronológico de entradas (compras) y salidas (ventas) de insumos.</p>
       </div>
       <div class="table-responsive">
@@ -300,7 +300,7 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
           <div class="modal-header bg-danger text-white">
-            <h2 class="modal-title fs-5" id="editSupplyTitle">Editar insumo</h2>
+            <h2 class="modal-title fs-5 fw-bold" id="editSupplyTitle">Editar insumo</h2>
             <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeEditSupply()"></button>
           </div>
           <form [formGroup]="editSupplyForm" (ngSubmit)="saveEditedSupply()" novalidate>
