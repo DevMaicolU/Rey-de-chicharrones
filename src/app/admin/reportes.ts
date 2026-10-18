@@ -18,7 +18,14 @@ export class Reportes {
 
   startDate = '';
   endDate = '';
+
+  get dateRangeInvalid(): boolean {
+    if (!this.startDate || !this.endDate) return false;
+    return this.startDate > this.endDate;
+  }
+
   filteredOrders(): OrderRecord[] {
+    if (this.dateRangeInvalid) return [];
     const start = this.startDate ? new Date(`${this.startDate}T00:00:00`).getTime() : -Infinity;
     const end = this.endDate ? new Date(`${this.endDate}T23:59:59.999`).getTime() : Infinity;
     return this.orders()
@@ -63,6 +70,7 @@ export class Reportes {
     pdf.save(`Factura_El_Rey_De_Los_Chicharrones_Pedido_${order.id}.pdf`);
   }
   filteredPurchases(): Purchase[] {
+    if (this.dateRangeInvalid) return [];
     const start = this.startDate ? new Date(`${this.startDate}T00:00:00`).getTime() : -Infinity;
     const end = this.endDate ? new Date(`${this.endDate}T23:59:59.999`).getTime() : Infinity;
     return this.purchases().filter(purchase => purchase.status === 'recibida').filter(purchase => {

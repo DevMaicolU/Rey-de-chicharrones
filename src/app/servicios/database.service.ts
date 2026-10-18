@@ -403,6 +403,12 @@ export class DatabaseService {
     if (!validation.ok || validation.name === undefined || validation.description === undefined || validation.price === undefined || validation.type === undefined || validation.recipe === undefined) {
       return validation;
     }
+    const duplicate = this.activeProducts.find(
+      item => item.id !== productId && item.name.trim().toLowerCase() === validation.name!.toLowerCase()
+    );
+    if (duplicate) {
+      return { ok: false, error: `Ya existe otro producto con el nombre "${validation.name}".` };
+    }
     const product: ActiveProduct = {
       ...current,
       name: validation.name,
@@ -998,11 +1004,14 @@ export class DatabaseService {
     const price = Number(input.price);
     const recipe = this.normalizeRecipe(input.recipe);
 
-    if (!name || !['Comida', 'Bebida'].includes(type)) {
-      return { ok: false, error: 'El nombre y el tipo del producto son obligatorios.' };
+    if (!name) {
+      return { ok: false, error: 'El nombre del producto es obligatorio.' };
     }
-    if (!Number.isFinite(price) || price < 0) {
-      return { ok: false, error: 'El precio del producto debe ser válido.' };
+    if (!['Comida', 'Bebida'].includes(type)) {
+      return { ok: false, error: 'La categoría del producto es obligatoria (Comida o Bebida).' };
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      return { ok: false, error: 'El precio del producto debe ser un número mayor a cero.' };
     }
     if (!recipe.length) {
       return { ok: false, error: 'La receta del producto debe incluir al menos un insumo.' };

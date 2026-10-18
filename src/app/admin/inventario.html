@@ -1,14 +1,14 @@
-<div class="container">
+<div class="container pb-5">
   <header class="mb-4">
     <span class="badge text-bg-warning mb-2">ADMINISTRACIÓN</span>
     <h1 class="h2 text-danger fw-bold mb-1">Gestión de Inventario</h1>
     <p class="text-secondary mb-0">Administra los productos de venta, los insumos del restaurante y consulta los movimientos de existencias.</p>
   </header>
 
-  <!-- ===== SECCIÓN: CREAR / EDITAR PRODUCTO ===== -->
-  <section class="card border-0 shadow-sm mb-5">
+  <!-- ===== SECCIÓN: CREAR PRODUCTO ===== -->
+  <section class="card border-0 shadow-sm mb-5 rounded-4">
     <div class="card-header bg-white border-0 pt-4 px-4">
-      <h2 class="h4 mb-1 text-danger fw-bold">{{ editingProductId ? 'Editar producto de venta' : 'Crear producto de venta' }}</h2>
+      <h2 class="h4 mb-1 text-danger fw-bold">Crear producto de venta</h2>
       <p class="text-secondary mb-0">Define el nombre, precio, tipo y la receta de insumos que consume cada producto.</p>
     </div>
     <div class="card-body px-4">
@@ -16,18 +16,18 @@
         <h3 class="h6 text-danger border-bottom pb-2 mb-3">Información del producto</h3>
         <div class="row g-3">
           <div class="col-12 col-md-6">
-            <label class="form-label" for="productName">Nombre del producto</label>
+            <label class="form-label fw-semibold" for="productName">Nombre del producto <span class="text-danger">*</span></label>
             <input id="productName" class="form-control" formControlName="name" placeholder="Ej: Chicharrón especial" required>
           </div>
           <div class="col-12 col-md-3">
-            <label class="form-label" for="productType">Categoría</label>
+            <label class="form-label fw-semibold" for="productType">Categoría <span class="text-danger">*</span></label>
             <select id="productType" class="form-select" formControlName="type">
               <option value="Comida">Comida</option>
               <option value="Bebida">Bebida</option>
             </select>
           </div>
           <div class="col-12 col-md-3">
-            <label class="form-label" for="productPrice">Precio de venta (COP)</label>
+            <label class="form-label fw-semibold" for="productPrice">Precio de venta (COP) <span class="text-danger">*</span></label>
             <input id="productPrice" class="form-control" type="number" min="1" formControlName="price" placeholder="Ej: 15000" required>
           </div>
           <div class="col-12">
@@ -49,15 +49,15 @@
         <div class="mt-4 pt-3 border-top" formArrayName="recipe">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
-              <h3 class="h5 mb-0">Receta del producto</h3>
+              <h3 class="h6 text-danger fw-bold mb-0">Receta del producto <span class="text-danger">*</span></h3>
               <p class="small text-secondary mb-0">Define qué insumos y en qué cantidad consume este producto al venderse.</p>
             </div>
-            <button class="btn btn-sm btn-outline-danger" type="button" (click)="addRecipeItem()">+ Agregar insumo</button>
+            <button class="btn btn-sm btn-outline-danger fw-semibold" type="button" (click)="addRecipeItem()">+ Agregar insumo</button>
           </div>
           @for (recipeItem of recipeItems.controls; track $index; let index = $index) {
-            <div class="row g-2 align-items-end mb-2" [formGroupName]="index">
+            <div class="row g-2 align-items-end mb-2 p-2 bg-light rounded-3 border" [formGroupName]="index">
               <div class="col-12 col-md-7">
-                <label class="form-label small" [for]="'recipeSupply' + index">Insumo</label>
+                <label class="form-label small fw-semibold" [for]="'recipeSupply' + index">Insumo</label>
                 <select class="form-select" [id]="'recipeSupply' + index" formControlName="insumoCode" required>
                   <option value="">Selecciona un insumo</option>
                   @for (supply of supplies(); track supply.code) {
@@ -65,11 +65,11 @@
                   }
                 </select>
               </div>
-              <div class="col-10 col-md-3">
-                <label class="form-label small" [for]="'recipeQuantity' + index">Cantidad requerida ({{ recipeUnit(recipeItem.get('insumoCode')?.value || '') }})</label>
+              <div class="col-9 col-md-3">
+                <label class="form-label small fw-semibold" [for]="'recipeQuantity' + index">Cantidad requerida ({{ recipeUnit(recipeItem.get('insumoCode')?.value || '') }})</label>
                 <input class="form-control" [id]="'recipeQuantity' + index" type="number" min="0.001" step="0.001" formControlName="quantityNeeded" required>
               </div>
-              <div class="col-2 col-md-2">
+              <div class="col-3 col-md-2">
                 <button class="btn btn-outline-secondary w-100" type="button" (click)="removeRecipeItem(index)" aria-label="Eliminar insumo">Quitar</button>
               </div>
             </div>
@@ -81,8 +81,7 @@
         @if (productError) { <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ productError }}</div> }
         @if (productMessage) { <div class="alert alert-success py-2 mt-3 mb-0" role="status">{{ productMessage }}</div> }
         <div class="text-end mt-4">
-          @if (editingProductId) { <button class="btn btn-light me-2" type="button" (click)="cancelProductEdit()">Cancelar edición</button> }
-          <button class="btn btn-warning fw-semibold" type="submit">{{ editingProductId ? 'Guardar cambios' : 'Crear producto' }}</button>
+          <button class="btn btn-danger fw-bold px-4" type="submit">Crear producto</button>
         </div>
       </form>
     </div>
@@ -114,15 +113,15 @@
                 <div class="mb-3">
                   <div class="small fw-semibold text-secondary mb-1">Receta (insumos):</div>
                   @for (item of product.recipe; track item.insumoCode) {
-                    <span class="badge text-bg-light me-1 mb-1">{{ supplyName(item.insumoCode) }}: {{ item.quantityNeeded }}</span>
+                    <span class="badge text-bg-light me-1 mb-1 border">{{ supplyName(item.insumoCode) }}: {{ item.quantityNeeded }} {{ supplyUnit(item.insumoCode) }}</span>
                   }
                 </div>
               }
               <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
                 <strong class="fs-5 text-danger">{{ product.price | currency:'COP':'symbol-narrow':'1.0-0' }}</strong>
                 <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-warning" type="button" (click)="editProduct(product)">Editar</button>
-                  <button class="btn btn-outline-danger" type="button" (click)="removeProduct(product)">Eliminar</button>
+                  <button class="btn btn-outline-warning fw-semibold px-3" type="button" (click)="openEditProduct(product)" title="Editar producto">Editar</button>
+                  <button class="btn btn-outline-danger fw-semibold px-3" type="button" (click)="removeProduct(product)" title="Eliminar producto">Eliminar</button>
                 </div>
               </div>
             </div>
@@ -139,7 +138,7 @@
   </section>
 
   <!-- ===== SECCIÓN: INSUMOS ===== -->
-  <section>
+  <section class="mb-5">
     <!-- Formulario crear insumo -->
     <div class="card shadow-sm border-0 rounded-4 mb-4">
       <div class="card-body p-4">
@@ -150,17 +149,17 @@
         <form [formGroup]="supplyForm" (ngSubmit)="createSupply()" novalidate>
           <div class="row g-3">
             <div class="col-12 col-md-3">
-              <label class="form-label fw-semibold" for="supplyCode">Código de insumo</label>
+              <label class="form-label fw-semibold" for="supplyCode">Código de insumo <span class="text-danger">*</span></label>
               <input id="supplyCode" class="form-control form-control-lg" formControlName="code"
                 placeholder="Ej. CAR-002" autocomplete="off" required>
             </div>
             <div class="col-12 col-md-4">
-              <label class="form-label fw-semibold" for="supplyName">Nombre del insumo</label>
+              <label class="form-label fw-semibold" for="supplyName">Nombre del insumo <span class="text-danger">*</span></label>
               <input id="supplyName" class="form-control form-control-lg" formControlName="name"
                 placeholder="Ej. Carne de cerdo" autocomplete="off" required>
             </div>
             <div class="col-12 col-md-2">
-              <label class="form-label fw-semibold" for="supplyUnit">Unidad de medida</label>
+              <label class="form-label fw-semibold" for="supplyUnit">Unidad de medida <span class="text-danger">*</span></label>
               <select id="supplyUnit" class="form-select form-select-lg" formControlName="unitOfMeasure">
                 <option value="gramos">Gramos</option>
                 <option value="unidades">Unidades</option>
@@ -215,7 +214,7 @@
       </div>
     </div>
 
-    <!-- Tabla de insumos (sin Costo promedio ni Último costo) -->
+    <!-- Tabla de insumos -->
     <div class="table-responsive card border-0 shadow-sm rounded-4 mb-4">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-dark">
@@ -236,7 +235,7 @@
               <td class="fw-semibold">{{ supply.name }}</td>
               <td>{{ providers().find(provider => provider.id === supply.preferredProviderId)?.name || '—' }}</td>
               <td>{{ supply.unitOfMeasure }}</td>
-              <td class="fw-bold" [class.text-danger]="supply.status === 'Agotado'" [class.text-warning]="supply.status === 'Escaso'">{{ supply.quantity }}</td>
+              <td class="fw-bold" [class.text-danger]="supply.status === 'Agotado'" [class.text-warning]="supply.status === 'Escaso'">{{ supply.quantity }} {{ supply.unitOfMeasure }}</td>
               <td>
                 <span class="badge rounded-pill"
                   [class.text-bg-success]="supply.status === 'Disponible'"
@@ -262,37 +261,220 @@
         </tbody>
       </table>
     </div>
-
-    <!-- Kardex de movimientos con espaciado mejorado -->
-    <section class="card border-0 shadow-sm rounded-4 mt-5" style="margin-top: 2.75rem !important;">
-      <div class="card-header bg-white rounded-top-4 py-3">
-        <h2 class="h5 mb-0 text-danger fw-bold">📋 Kardex — Historial de movimientos de stock</h2>
-        <p class="small text-secondary mb-0">Registro cronológico de entradas (compras) y salidas (ventas) de insumos.</p>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead class="table-light">
-            <tr><th>Fecha y hora</th><th>Insumo</th><th>Tipo de movimiento</th><th>Cantidad</th><th>Referencia</th></tr>
-          </thead>
-          <tbody>
-            @for (movement of movements(); track movement.id) {
-              <tr>
-                <td>{{ movement.date | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ supplyName(movement.supplyCode) }}</td>
-                <td class="text-capitalize">{{ movement.type }}</td>
-                <td [class.text-success]="movement.quantity > 0" [class.text-danger]="movement.quantity < 0" class="fw-semibold">
-                  {{ movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}
-                </td>
-                <td>{{ movement.reference }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="5" class="text-center text-secondary py-3">Aún no hay movimientos registrados.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
   </section>
+
+  <!-- ===== SECCIÓN: KARDEX CON FILTROS Y UNIDADES DE MEDIDA ===== -->
+  <section class="card border-0 shadow-sm rounded-4 mt-5">
+    <div class="card-header bg-white rounded-top-4 py-3 border-0">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <h2 class="h5 mb-0 text-danger fw-bold">📋 Kardex — Historial de movimientos de stock</h2>
+          <p class="small text-secondary mb-0">Registro cronológico de entradas (compras), salidas (ventas) y ajustes de insumos.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-dark border">
+            Mostrando {{ filteredMovements.length }} de {{ movements().length }} movimiento{{ movements().length !== 1 ? 's' : '' }}
+          </span>
+          @if (hayFiltrosKardexActivos) {
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="button" (click)="limpiarFiltrosKardex()">
+              ✕ Limpiar filtros
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Filtros del Kardex -->
+    <div class="p-3 bg-light border-top border-bottom">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label small fw-semibold mb-1" for="kardexFechaInicio">Fecha desde</label>
+          <input id="kardexFechaInicio" type="date" class="form-control form-control-sm" [(ngModel)]="kardexFechaInicio">
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label small fw-semibold mb-1" for="kardexFechaFin">Fecha hasta</label>
+          <input id="kardexFechaFin" type="date" class="form-control form-control-sm" [(ngModel)]="kardexFechaFin">
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label small fw-semibold mb-1" for="kardexInsumoFiltro">Insumo</label>
+          <select id="kardexInsumoFiltro" class="form-select form-select-sm" [(ngModel)]="kardexInsumoFiltro">
+            <option value="">Todos los insumos</option>
+            @for (supply of supplies(); track supply.code) {
+              <option [value]="supply.code">{{ supply.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label small fw-semibold mb-1" for="kardexProductoFiltro">Producto</label>
+          <select id="kardexProductoFiltro" class="form-select form-select-sm" [(ngModel)]="kardexProductoFiltro">
+            <option value="">Todos los productos</option>
+            @for (prod of products(); track prod.id) {
+              <option [value]="prod.id">{{ prod.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label small fw-semibold mb-1" for="kardexTipoFiltro">Tipo de movimiento</label>
+          <select id="kardexTipoFiltro" class="form-select form-select-sm" [(ngModel)]="kardexTipoFiltro">
+            <option value="">Todos los tipos</option>
+            <option value="venta">Ventas (Salidas)</option>
+            <option value="compra">Compras (Entradas)</option>
+            <option value="ajuste">Ajustes</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label small fw-semibold mb-1" for="kardexBusqueda">Referencia / Búsqueda</label>
+          <input id="kardexBusqueda" type="text" class="form-control form-control-sm" [(ngModel)]="kardexBusqueda" placeholder="Ej: Pedido #1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla Kardex -->
+    <div class="table-responsive">
+      <table class="table table-hover table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3 py-2">Fecha y hora</th>
+            <th class="py-2">Insumo</th>
+            <th class="py-2">Tipo de movimiento</th>
+            <th class="py-2 text-end">Cantidad</th>
+            <th class="ps-3 py-2">Referencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (movement of filteredMovements; track movement.id) {
+            <tr>
+              <td class="ps-3 small text-secondary">{{ movement.date | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="fw-semibold">{{ supplyName(movement.supplyCode) }}</td>
+              <td>
+                <span class="badge"
+                  [class.text-bg-success]="movement.type === 'compra'"
+                  [class.text-bg-danger]="movement.type === 'venta'"
+                  [class.text-bg-warning]="movement.type === 'ajuste'">
+                  {{ movement.type | titlecase }}
+                </span>
+              </td>
+              <td [class.text-success]="movement.quantity > 0" [class.text-danger]="movement.quantity < 0" class="fw-bold text-end pe-3 font-monospace">
+                {{ movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }} {{ supplyUnit(movement.supplyCode) }}
+              </td>
+              <td class="ps-3 small text-secondary">{{ movement.reference }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center text-secondary py-4">
+                @if (hayFiltrosKardexActivos) {
+                  <div>
+                    <p class="mb-2">No se encontraron movimientos que coincidan con los filtros aplicados.</p>
+                    <button class="btn btn-sm btn-outline-danger" type="button" (click)="limpiarFiltrosKardex()">Limpiar filtros</button>
+                  </div>
+                } @else {
+                  Aún no hay movimientos registrados en el Kardex.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== MODAL: EDITAR PRODUCTO ===== -->
+  @if (editProductModalVisible && editingProduct) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editProductTitle">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h2 class="modal-title fs-5 fw-bold" id="editProductTitle">Editar producto de venta</h2>
+            <button class="btn-close btn-close-white" type="button" aria-label="Cerrar" (click)="closeEditProduct()"></button>
+          </div>
+          <form [formGroup]="editProductForm" (ngSubmit)="saveEditedProduct()" novalidate>
+            <div class="modal-body p-4">
+              <p class="text-secondary small mb-3">Define el nombre, precio, tipo y la receta de insumos que consume cada producto.</p>
+              
+              <h3 class="h6 text-danger border-bottom pb-2 mb-3">Información del producto</h3>
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold" for="editProductName">Nombre del producto <span class="text-danger">*</span></label>
+                  <input id="editProductName" class="form-control" formControlName="name" placeholder="Ej: Hamburguesa común" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-semibold" for="editProductType">Categoría <span class="text-danger">*</span></label>
+                  <select id="editProductType" class="form-select" formControlName="type">
+                    <option value="Comida">Comida</option>
+                    <option value="Bebida">Bebida</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-semibold" for="editProductPrice">Precio de venta (COP) <span class="text-danger">*</span></label>
+                  <input id="editProductPrice" class="form-control" type="number" min="1" formControlName="price" placeholder="Ej: 15000" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold" for="editProductDescription">Descripción corta (opcional)</label>
+                  <textarea id="editProductDescription" class="form-control" rows="2" formControlName="description" placeholder="Describe brevemente el plato o bebida (opcional)."></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold" for="editProductImageUrl">URL de imagen (obligatoria) <span class="text-danger">*</span></label>
+                  <input id="editProductImageUrl" class="form-control" formControlName="imageUrl" placeholder="https://... o ruta de imagen" required>
+                  @if (editProductForm.get('imageUrl')?.value) {
+                    <div class="mt-2 d-flex align-items-center gap-2">
+                      <span class="small text-secondary">Vista previa:</span>
+                      <img [src]="editProductForm.get('imageUrl')?.value || imagenRespaldo" (error)="onImageError($event)" alt="Vista previa" class="rounded-3 object-fit-cover border" style="width: 50px; height: 50px;">
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Receta del producto en Modal -->
+              <div class="mt-4 pt-3 border-top" formArrayName="recipe">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <h3 class="h6 text-danger fw-bold mb-0">Receta del producto <span class="text-danger">*</span></h3>
+                    <p class="small text-secondary mb-0">Define qué insumos y en qué cantidad consume este producto al venderse.</p>
+                  </div>
+                  <button class="btn btn-sm btn-outline-danger fw-semibold" type="button" (click)="addEditRecipeItem()">+ Agregar insumo</button>
+                </div>
+                @for (recipeItem of editRecipeItems.controls; track $index; let index = $index) {
+                  <div class="row g-2 align-items-end mb-2 p-2 bg-light rounded-3 border" [formGroupName]="index">
+                    <div class="col-12 col-md-7">
+                      <label class="form-label small fw-semibold" [for]="'editRecipeSupply' + index">Insumo</label>
+                      <select class="form-select" [id]="'editRecipeSupply' + index" formControlName="insumoCode" required>
+                        <option value="">Selecciona un insumo</option>
+                        @for (supply of supplies(); track supply.code) {
+                          <option [value]="supply.code">{{ supply.name }} ({{ supply.unitOfMeasure }})</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="col-9 col-md-3">
+                      <label class="form-label small fw-semibold" [for]="'editRecipeQuantity' + index">
+                        Cantidad requerida ({{ recipeUnit(recipeItem.get('insumoCode')?.value || '') }})
+                      </label>
+                      <input class="form-control" [id]="'editRecipeQuantity' + index" type="number" min="0.001" step="0.001" formControlName="quantityNeeded" required>
+                    </div>
+                    <div class="col-3 col-md-2">
+                      <button class="btn btn-outline-secondary w-100" type="button" (click)="removeEditRecipeItem(index)" aria-label="Eliminar insumo">Quitar</button>
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="alert alert-warning py-2 mb-0 small" role="alert">
+                    Agrega al menos un insumo para la receta de este producto.
+                  </div>
+                }
+              </div>
+
+              @if (editProductError) {
+                <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">{{ editProductError }}</div>
+              }
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light px-4" type="button" (click)="closeEditProduct()">Cancelar edición</button>
+              <button class="btn btn-warning fw-bold px-4" type="submit">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
 
   <!-- ===== MODAL: EDITAR INSUMO ===== -->
   @if (editSupplyModalVisible) {
@@ -310,12 +492,12 @@
                 <input id="editSupplyCode" class="form-control" formControlName="code" readonly>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="editSupplyName">Nombre del insumo</label>
+                <label class="form-label fw-semibold" for="editSupplyName">Nombre del insumo <span class="text-danger">*</span></label>
                 <input id="editSupplyName" class="form-control" formControlName="name" required>
               </div>
               <div class="row g-3">
                 <div class="col-6">
-                  <label class="form-label fw-semibold" for="editSupplyUnit">Unidad de medida</label>
+                  <label class="form-label fw-semibold" for="editSupplyUnit">Unidad de medida <span class="text-danger">*</span></label>
                   <select id="editSupplyUnit" class="form-select" formControlName="unitOfMeasure">
                     <option value="gramos">Gramos</option>
                     <option value="unidades">Unidades</option>
@@ -338,7 +520,7 @@
             </div>
             <div class="modal-footer">
               <button class="btn btn-light" type="button" (click)="closeEditSupply()">Cancelar</button>
-              <button class="btn btn-danger" type="submit">Guardar cambios</button>
+              <button class="btn btn-danger fw-bold" type="submit">Guardar cambios</button>
             </div>
           </form>
         </div>

@@ -55,20 +55,44 @@ export class Empleados {
 
   createUser(): void {
     this.error = '';
-    if (this.createForm.invalid) {
-      this.createForm.markAllAsTouched();
-      this.error = 'Completa todos los campos con valores válidos.';
+    const value = this.createForm.getRawValue();
+    const cleanName = value.name.trim();
+    const cleanUsername = value.username.trim();
+
+    if (!cleanName) {
+      this.createForm.controls.name.markAsTouched();
+      this.error = 'El nombre completo del usuario es obligatorio.';
+      return;
+    }
+    if (!cleanUsername) {
+      this.createForm.controls.username.markAsTouched();
+      this.error = 'El nombre de usuario es obligatorio.';
+      return;
+    }
+    if (!value.password || value.password.length < 6) {
+      this.createForm.controls.password.markAsTouched();
+      this.error = 'La contraseña debe tener al menos 6 caracteres.';
       return;
     }
 
-    const value = this.createForm.getRawValue();
-    const result = this.database.addUser(value);
+    if (this.users().some(u => u.username.toLowerCase() === cleanUsername.toLowerCase())) {
+      this.error = `Ya existe un usuario con el nombre de usuario "${cleanUsername}".`;
+      return;
+    }
+
+    const result = this.database.addUser({
+      name: cleanName,
+      username: cleanUsername,
+      password: value.password,
+      role: value.role
+    });
+
     if (!result.ok) {
       this.error = result.error ?? 'No fue posible registrar el usuario.';
       return;
     }
 
-    this.message = 'Usuario registrado correctamente.';
+    this.message = `Usuario "${cleanName}" registrado correctamente.`;
     this.closeCreateModal();
   }
 
@@ -82,20 +106,29 @@ export class Empleados {
   closeEditModal(): void {
     this.editModalVisible = false;
     this.selectedUser = null;
+    this.editError = '';
   }
 
   updateUser(): void {
     if (!this.selectedUser) return;
     this.editError = '';
-    if (this.editForm.invalid) {
-      this.editForm.markAllAsTouched();
-      this.editError = 'Completa el nombre y usa una contraseña válida si deseas cambiarla.';
+
+    const value = this.editForm.getRawValue();
+    const cleanName = value.name.trim();
+
+    if (!cleanName) {
+      this.editForm.controls.name.markAsTouched();
+      this.editError = 'El nombre completo del usuario es obligatorio.';
+      return;
+    }
+    if (value.password && value.password.length < 6) {
+      this.editForm.controls.password.markAsTouched();
+      this.editError = 'La nueva contraseña debe tener al menos 6 caracteres.';
       return;
     }
 
-    const value = this.editForm.getRawValue();
     const result = this.database.updateUser(this.selectedUser.id, {
-      name: value.name,
+      name: cleanName,
       role: value.role,
       ...(value.password ? { password: value.password } : {})
     });
@@ -104,7 +137,7 @@ export class Empleados {
       return;
     }
 
-    this.message = 'Usuario actualizado correctamente.';
+    this.message = `Usuario "${cleanName}" actualizado correctamente.`;
     this.closeEditModal();
   }
 

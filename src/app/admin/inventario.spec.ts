@@ -19,6 +19,11 @@ describe('Inventario', () => {
       name: 'Pan',
       unitOfMeasure: 'unidades'
     });
+    db.addSupply({
+      code: 'CAR-01',
+      name: 'Carne',
+      unitOfMeasure: 'gramos'
+    });
     db.addManualProduct({
       name: 'Producto Existente',
       description: 'Desc',
@@ -103,5 +108,100 @@ describe('Inventario', () => {
 
     const existe = db.activeProducts.some(p => p.id === product.id);
     expect(existe).toBe(false);
+  });
+
+  it('abre el modal de edición de producto con los datos precargados y permite guardar cambios', () => {
+    const product = db.activeProducts[0];
+    expect(product).toBeDefined();
+
+    // Abrir modal de edición
+    component.openEditProduct(product);
+    expect(component.editProductModalVisible).toBe(true);
+    expect(component.editingProduct).toEqual(product);
+    expect(component.editProductForm.value.name).toBe('Producto Existente');
+    expect(component.editProductForm.value.price).toBe(15000);
+    expect(component.editRecipeItems.length).toBe(1);
+
+    // Modificar datos válidos
+    component.editProductForm.patchValue({
+      name: 'Producto Modificado',
+      price: 19500
+    });
+
+    // Guardar cambios
+    component.saveEditedProduct();
+    expect(component.editProductModalVisible).toBe(false);
+    expect(component.productMessage).toContain('actualizado correctamente');
+
+    const actualizado = db.activeProducts.find(p => p.id === product.id);
+    expect(actualizado?.name).toBe('Producto Modificado');
+    expect(actualizado?.price).toBe(19500);
+  });
+
+  it('valida campos obligatorios en el modal de edición e impide guardar datos incompletos', () => {
+    const product = db.activeProducts[0];
+    component.openEditProduct(product);
+
+    // Nombre vacío
+    component.editProductForm.patchValue({ name: '' });
+    component.saveEditedProduct();
+    expect(component.editProductModalVisible).toBe(true);
+    expect(component.editProductError).toContain('nombre');
+
+    // Precio inválido
+    component.editProductForm.patchValue({ name: 'Válido', price: -500 });
+    component.saveEditedProduct();
+    expect(component.editProductModalVisible).toBe(true);
+    expect(component.editProductError).toContain('precio');
+  });
+
+  it('permite filtrar el Kardex por tipo de movimiento, insumo, producto y limpiar filtros', () => {
+    // Agregar proveedor y registrar compra recibida
+    db.addProvider({
+      name: 'Distribuidor Pan',
+      nit: '900123456',
+      contactName: 'Carlos',
+      phone: '3001234567',
+      email: 'pan@distribuidor.com'
+    });
+
+    const providerId = db.providers[0].id;
+    db.createPurchase({
+      providerId,
+      date: new Date().toISOString(),
+      items: [{
+        supplyCode: 'PAN-01',
+        supplyName: 'Pan',
+        unitOfMeasure: 'unidades',
+        packages: 5,
+        unitsPerPackage: 1,
+        packageCost: 1000,
+        baseQuantity: 5,
+        costPerBaseUnit: 1000,
+        subtotal: 5000
+      }]
+    }, true);
+
+    expect(component.movements().length).toBeGreaterThan(0);
+
+    // Filtrar por tipo 'compra'
+    component.kardexTipoFiltro = 'compra';
+    expect(component.filteredMovements.every(m => m.type === 'compra')).toBe(true);
+
+    // Filtrar por insumo 'PAN-01'
+    component.kardexInsumoFiltro = 'PAN-01';
+    expect(component.filteredMovements.every(m => m.supplyCode === 'PAN-01')).toBe(true);
+
+    // Limpiar filtros
+    component.limpiarFiltrosKardex();
+    expect(component.kardexTipoFiltro).toBe('');
+    expect(component.kardexInsumoFiltro).toBe('');
+    expect(component.filteredMovements.length).toBe(component.movements().length);
+  });
+
+  it('obtiene la unidad de medida real de cada insumo en el Kardex', () => {
+    expect(component.supplyUnit('PAN-01')).toBe('unidades');
+    expect(component.supplyUnit('CAR-01')).toBe('gramos');
+    expect(component.supplyUnit('INEXISTENTE')).toBe('');
   });
 });

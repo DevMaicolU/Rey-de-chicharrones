@@ -27,6 +27,12 @@
     </div>
   </section>
 
+  @if (dateRangeInvalid) {
+    <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert">
+      <strong>Rango de fechas inválido:</strong> La fecha inicial no puede ser posterior a la fecha final.
+    </div>
+  }
+
   <div class="row g-3 mb-4">
     <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Pedidos completados</div><div class="display-6 fw-bold text-danger">{{ totalPedidos() }}</div></div></div></div>
     <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary">Ingresos del periodo</div><div class="h3 fw-bold text-danger mb-0">{{ totalIngresos() | currency:'COP':'symbol-narrow':'1.0-0' }}</div></div></div></div>

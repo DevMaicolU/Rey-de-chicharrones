@@ -1,14 +1,14 @@
 import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DatabaseService, Insumo, UnitOfMeasure } from '../servicios/database.service';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DatabaseService, Insumo, StockMovement, UnitOfMeasure } from '../servicios/database.service';
 import { Product } from '../entidades/modelos';
 import { IMAGEN_RESPALDO, usarImagenRespaldo } from '../util/imagen';
 
 @Component({
   selector: 'app-inventario',
-  imports: [CurrencyPipe, DatePipe, TitleCasePipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, TitleCasePipe, ReactiveFormsModule, FormsModule],
   templateUrl: './inventario.html'
 })
 export class Inventario {
@@ -25,7 +25,7 @@ export class Inventario {
     usarImagenRespaldo(event);
   }
 
-  // Imagen OBLIGATORIA, Descripción OPCIONAL
+  // ===== FORMULARIO: CREACIÓN DE PRODUCTO (Sección Principal) =====
   readonly productForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     description: ['', [Validators.maxLength(500)]],
@@ -38,37 +38,9 @@ export class Inventario {
     }>>([])
   });
 
-  readonly supplyForm = this.formBuilder.nonNullable.group({
-    code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
-    name: ['', [Validators.required, Validators.maxLength(100)]],
-    unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
-    preferredProviderId: [0]
-  });
-
-  readonly editSupplyForm = this.formBuilder.nonNullable.group({
-    code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
-    name: ['', [Validators.required, Validators.maxLength(100)]],
-    unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
-    preferredProviderId: [0],
-    minimumQuantity: [20, [Validators.required, Validators.min(0)]]
-  });
-
   productError = '';
   productMessage = '';
   editingProductId: string | null = null;
-
-  // Modal para eliminar producto (sin window.confirm)
-  deletingProduct: Product | null = null;
-  deleteProductModalVisible = false;
-
-  supplyError = '';
-  supplyMessage = '';
-  editSupplyError = '';
-  deleteSupplyError = '';
-  editingSupplyCode: string | null = null;
-  deletingSupply: Insumo | null = null;
-  editSupplyModalVisible = false;
-  deleteSupplyModalVisible = false;
 
   get recipeItems(): FormArray<FormGroup<{
     insumoCode: FormControl<string>;
@@ -93,27 +65,48 @@ export class Inventario {
     this.productMessage = '';
 
     const value = this.productForm.getRawValue();
-    if (!value.name.trim()) {
-      this.productForm.markAllAsTouched();
+    const cleanName = value.name.trim();
+    const cleanImage = value.imageUrl.trim();
+    const cleanDescription = value.description.trim();
+
+    if (!cleanName) {
+      this.productForm.controls.name.markAsTouched();
       this.productError = 'El nombre del producto es obligatorio.';
       return;
     }
-    if (!value.imageUrl.trim()) {
-      this.productForm.markAllAsTouched();
+    if (!cleanImage) {
+      this.productForm.controls.imageUrl.markAsTouched();
       this.productError = 'La imagen del producto es obligatoria. Por favor ingresa una URL de imagen válida.';
       return;
     }
-    if (this.productForm.invalid || !this.recipeItems.length) {
-      this.productForm.markAllAsTouched();
-      this.productError = 'Completa los campos obligatorios del producto (nombre, precio, imagen) y agrega al menos un insumo a la receta.';
+    if (!value.price || value.price <= 0) {
+      this.productForm.controls.price.markAsTouched();
+      this.productError = 'El precio debe ser un número mayor a cero.';
+      return;
+    }
+    if (!this.recipeItems.length) {
+      this.productError = 'La receta del producto debe incluir al menos un insumo.';
+      return;
+    }
+
+    for (let i = 0; i < this.recipeItems.length; i++) {
+      const item = this.recipeItems.at(i).getRawValue();
+      if (!item.insumoCode || !item.quantityNeeded || item.quantityNeeded <= 0) {
+        this.productError = 'Selecciona un insumo y una cantidad válida mayor a cero para cada elemento de la receta.';
+        return;
+      }
+    }
+
+    if (this.products().some(p => p.name.trim().toLowerCase() === cleanName.toLowerCase())) {
+      this.productError = `Ya existe un producto con el nombre "${cleanName}".`;
       return;
     }
 
     const input = {
-      name: value.name.trim(),
-      description: value.description.trim(),
+      name: cleanName,
+      description: cleanDescription,
       price: value.price,
-      imageUrl: value.imageUrl.trim(),
+      imageUrl: cleanImage,
       type: value.type,
       recipe: value.recipe.map(item => ({
         insumoCode: item.insumoCode,
@@ -121,27 +114,59 @@ export class Inventario {
       }))
     };
 
-    const result = this.editingProductId
-      ? this.database.updateManualProduct(this.editingProductId, input)
-      : this.database.addManualProduct(input);
-
+    const result = this.database.addManualProduct(input);
     if (!result.ok) {
       this.productError = result.error ?? 'No fue posible crear el producto.';
       return;
     }
 
-    this.productMessage = this.editingProductId ? 'Producto actualizado correctamente.' : 'Producto creado correctamente.';
-    this.editingProductId = null;
+    this.productMessage = `Producto "${cleanName}" creado correctamente.`;
     this.productForm.reset({ name: '', description: '', price: 0, imageUrl: '', type: 'Comida' });
     this.recipeItems.clear();
   }
 
-  editProduct(product: Product): void {
+  // ===== MODAL: EDICIÓN DE PRODUCTO =====
+  readonly editProductForm = this.formBuilder.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(100)]],
+    description: ['', [Validators.maxLength(500)]],
+    price: [0, [Validators.required, Validators.min(1)]],
+    imageUrl: ['', [Validators.required]],
+    type: ['Comida' as Product['type'], Validators.required],
+    recipe: this.formBuilder.array<FormGroup<{
+      insumoCode: FormControl<string>;
+      quantityNeeded: FormControl<number>;
+    }>>([])
+  });
+
+  editingProduct: Product | null = null;
+  editProductModalVisible = false;
+  editProductError = '';
+
+  get editRecipeItems(): FormArray<FormGroup<{
+    insumoCode: FormControl<string>;
+    quantityNeeded: FormControl<number>;
+  }>> {
+    return this.editProductForm.controls.recipe;
+  }
+
+  addEditRecipeItem(): void {
+    this.editRecipeItems.push(this.formBuilder.nonNullable.group({
+      insumoCode: ['', Validators.required],
+      quantityNeeded: [1, [Validators.required, Validators.min(0.001)]]
+    }));
+  }
+
+  removeEditRecipeItem(index: number): void {
+    this.editRecipeItems.removeAt(index);
+  }
+
+  openEditProduct(product: Product): void {
+    this.editingProduct = product;
     this.editingProductId = product.id;
-    this.productError = '';
-    this.productMessage = '';
-    this.recipeItems.clear();
-    this.productForm.setValue({
+    this.editProductError = '';
+    this.editRecipeItems.clear();
+
+    this.editProductForm.setValue({
       name: product.name,
       description: product.description || '',
       price: product.price,
@@ -149,20 +174,100 @@ export class Inventario {
       type: product.type,
       recipe: []
     });
+
     for (const item of product.recipe) {
-      this.recipeItems.push(this.formBuilder.nonNullable.group({
+      this.editRecipeItems.push(this.formBuilder.nonNullable.group({
         insumoCode: [item.insumoCode, Validators.required],
         quantityNeeded: [item.quantityNeeded, [Validators.required, Validators.min(0.001)]]
       }));
     }
+
+    this.editProductModalVisible = true;
+  }
+
+  closeEditProduct(): void {
+    this.editProductModalVisible = false;
+    this.editingProduct = null;
+    this.editingProductId = null;
+    this.editProductError = '';
+  }
+
+  saveEditedProduct(): void {
+    if (!this.editingProduct) return;
+    this.editProductError = '';
+
+    const value = this.editProductForm.getRawValue();
+    const cleanName = value.name.trim();
+    const cleanImage = value.imageUrl.trim();
+    const cleanDescription = value.description.trim();
+
+    if (!cleanName) {
+      this.editProductForm.controls.name.markAsTouched();
+      this.editProductError = 'El nombre del producto es obligatorio.';
+      return;
+    }
+    if (!cleanImage) {
+      this.editProductForm.controls.imageUrl.markAsTouched();
+      this.editProductError = 'La imagen del producto es obligatoria. Por favor ingresa una URL de imagen válida.';
+      return;
+    }
+    if (!value.price || value.price <= 0) {
+      this.editProductForm.controls.price.markAsTouched();
+      this.editProductError = 'El precio debe ser un número mayor a cero.';
+      return;
+    }
+    if (!this.editRecipeItems.length) {
+      this.editProductError = 'La receta del producto debe incluir al menos un insumo.';
+      return;
+    }
+
+    for (let i = 0; i < this.editRecipeItems.length; i++) {
+      const item = this.editRecipeItems.at(i).getRawValue();
+      if (!item.insumoCode || !item.quantityNeeded || item.quantityNeeded <= 0) {
+        this.editProductError = 'Selecciona un insumo y una cantidad válida mayor a cero para cada elemento de la receta.';
+        return;
+      }
+    }
+
+    if (this.products().some(p => p.id !== this.editingProduct!.id && p.name.trim().toLowerCase() === cleanName.toLowerCase())) {
+      this.editProductError = `Ya existe otro producto con el nombre "${cleanName}".`;
+      return;
+    }
+
+    const input = {
+      name: cleanName,
+      description: cleanDescription,
+      price: value.price,
+      imageUrl: cleanImage,
+      type: value.type,
+      recipe: value.recipe.map(item => ({
+        insumoCode: item.insumoCode,
+        quantityNeeded: item.quantityNeeded
+      }))
+    };
+
+    const result = this.database.updateManualProduct(this.editingProduct.id, input);
+    if (!result.ok) {
+      this.editProductError = result.error ?? 'No fue posible actualizar el producto.';
+      return;
+    }
+
+    this.productMessage = `Producto "${cleanName}" actualizado correctamente.`;
+    this.closeEditProduct();
+  }
+
+  // Compatibilidad hacia atrás para llamadas desde plantillas o tests
+  editProduct(product: Product): void {
+    this.openEditProduct(product);
   }
 
   cancelProductEdit(): void {
-    this.editingProductId = null;
-    this.productForm.reset({ name: '', description: '', price: 0, imageUrl: '', type: 'Comida' });
-    this.recipeItems.clear();
-    this.productError = '';
+    this.closeEditProduct();
   }
+
+  // ===== MODAL: ELIMINACIÓN DE PRODUCTO =====
+  deletingProduct: Product | null = null;
+  deleteProductModalVisible = false;
 
   openDeleteProduct(product: Product): void {
     this.deletingProduct = product;
@@ -185,19 +290,62 @@ export class Inventario {
     this.openDeleteProduct(product);
   }
 
+  // ===== GESTIÓN DE INSUMOS =====
+  readonly supplyForm = this.formBuilder.nonNullable.group({
+    code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
+    name: ['', [Validators.required, Validators.maxLength(100)]],
+    unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
+    preferredProviderId: [0]
+  });
+
+  readonly editSupplyForm = this.formBuilder.nonNullable.group({
+    code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]+$/), Validators.maxLength(30)]],
+    name: ['', [Validators.required, Validators.maxLength(100)]],
+    unitOfMeasure: ['gramos' as UnitOfMeasure, Validators.required],
+    preferredProviderId: [0],
+    minimumQuantity: [20, [Validators.required, Validators.min(0)]]
+  });
+
+  supplyError = '';
+  supplyMessage = '';
+  editSupplyError = '';
+  deleteSupplyError = '';
+  editingSupplyCode: string | null = null;
+  deletingSupply: Insumo | null = null;
+  editSupplyModalVisible = false;
+  deleteSupplyModalVisible = false;
+
   createSupply(): void {
     this.supplyError = '';
     this.supplyMessage = '';
-    if (this.supplyForm.invalid) {
-      this.supplyForm.markAllAsTouched();
-      this.supplyError = 'Completa el código, nombre y unidad de medida.';
+
+    const value = this.supplyForm.getRawValue();
+    const cleanCode = value.code.trim().toUpperCase();
+    const cleanName = value.name.trim();
+
+    if (!cleanCode) {
+      this.supplyForm.controls.code.markAsTouched();
+      this.supplyError = 'El código del insumo es obligatorio.';
+      return;
+    }
+    if (!/^[A-Za-z0-9-]+$/.test(cleanCode)) {
+      this.supplyForm.controls.code.markAsTouched();
+      this.supplyError = 'El código solo puede contener letras, números y guiones (ej: CAR-002).';
+      return;
+    }
+    if (!cleanName) {
+      this.supplyForm.controls.name.markAsTouched();
+      this.supplyError = 'El nombre del insumo es obligatorio.';
+      return;
+    }
+    if (this.supplies().some(s => s.code === cleanCode)) {
+      this.supplyError = `Ya existe un insumo con el código "${cleanCode}".`;
       return;
     }
 
-    const value = this.supplyForm.getRawValue();
     const result = this.database.addSupply({
-      code: value.code,
-      name: value.name,
+      code: cleanCode,
+      name: cleanName,
       unitOfMeasure: value.unitOfMeasure,
       preferredProviderId: value.preferredProviderId ? Number(value.preferredProviderId) : undefined
     });
@@ -207,7 +355,7 @@ export class Inventario {
       return;
     }
 
-    this.supplyMessage = 'Insumo registrado correctamente.';
+    this.supplyMessage = `Insumo "${cleanName}" registrado correctamente.`;
     this.supplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos', preferredProviderId: 0 });
   }
 
@@ -227,20 +375,29 @@ export class Inventario {
   closeEditSupply(): void {
     this.editingSupplyCode = null;
     this.editSupplyModalVisible = false;
+    this.editSupplyError = '';
   }
 
   updateSupply(): void {
     if (!this.editingSupplyCode) return;
     this.editSupplyError = '';
-    if (this.editSupplyForm.invalid) {
-      this.editSupplyForm.markAllAsTouched();
-      this.editSupplyError = 'Completa los datos obligatorios del insumo.';
+
+    const value = this.editSupplyForm.getRawValue();
+    const cleanName = value.name.trim();
+
+    if (!cleanName) {
+      this.editSupplyForm.controls.name.markAsTouched();
+      this.editSupplyError = 'El nombre del insumo es obligatorio.';
+      return;
+    }
+    if (value.minimumQuantity === null || value.minimumQuantity < 0) {
+      this.editSupplyForm.controls.minimumQuantity.markAsTouched();
+      this.editSupplyError = 'El stock mínimo no puede ser negativo.';
       return;
     }
 
-    const value = this.editSupplyForm.getRawValue();
     const result = this.database.updateSupply(this.editingSupplyCode, {
-      name: value.name,
+      name: cleanName,
       unitOfMeasure: value.unitOfMeasure,
       preferredProviderId: value.preferredProviderId ? Number(value.preferredProviderId) : undefined,
       minimumQuantity: value.minimumQuantity
@@ -251,7 +408,7 @@ export class Inventario {
       return;
     }
 
-    this.supplyMessage = 'Insumo actualizado correctamente.';
+    this.supplyMessage = `Insumo "${cleanName}" actualizado correctamente.`;
     this.closeEditSupply();
   }
 
@@ -268,6 +425,7 @@ export class Inventario {
   closeDeleteSupply(): void {
     this.deletingSupply = null;
     this.deleteSupplyModalVisible = false;
+    this.deleteSupplyError = '';
   }
 
   confirmDeleteSupply(): void {
@@ -279,8 +437,77 @@ export class Inventario {
       return;
     }
 
-    this.supplyMessage = 'Insumo eliminado correctamente.';
+    this.supplyMessage = `Insumo "${this.deletingSupply.name}" eliminado correctamente.`;
     this.closeDeleteSupply();
+  }
+
+  // ===== FILTROS Y FUNCIONALIDAD DE KARDEX =====
+  kardexFechaInicio = '';
+  kardexFechaFin = '';
+  kardexInsumoFiltro = '';
+  kardexProductoFiltro = '';
+  kardexTipoFiltro = '';
+  kardexBusqueda = '';
+
+  limpiarFiltrosKardex(): void {
+    this.kardexFechaInicio = '';
+    this.kardexFechaFin = '';
+    this.kardexInsumoFiltro = '';
+    this.kardexProductoFiltro = '';
+    this.kardexTipoFiltro = '';
+    this.kardexBusqueda = '';
+  }
+
+  get hayFiltrosKardexActivos(): boolean {
+    return !!(
+      this.kardexFechaInicio ||
+      this.kardexFechaFin ||
+      this.kardexInsumoFiltro ||
+      this.kardexProductoFiltro ||
+      this.kardexTipoFiltro ||
+      this.kardexBusqueda.trim()
+    );
+  }
+
+  get filteredMovements(): StockMovement[] {
+    let list = this.movements();
+
+    if (this.kardexFechaInicio) {
+      const inicioTs = new Date(`${this.kardexFechaInicio}T00:00:00`).getTime();
+      list = list.filter(m => new Date(m.date).getTime() >= inicioTs);
+    }
+
+    if (this.kardexFechaFin) {
+      const finTs = new Date(`${this.kardexFechaFin}T23:59:59.999`).getTime();
+      list = list.filter(m => new Date(m.date).getTime() <= finTs);
+    }
+
+    if (this.kardexInsumoFiltro) {
+      list = list.filter(m => m.supplyCode === this.kardexInsumoFiltro);
+    }
+
+    if (this.kardexProductoFiltro) {
+      const prod = this.products().find(p => p.id === this.kardexProductoFiltro);
+      if (prod) {
+        const insumoCodes = prod.recipe.map(r => r.insumoCode);
+        list = list.filter(m => insumoCodes.includes(m.supplyCode));
+      }
+    }
+
+    if (this.kardexTipoFiltro) {
+      list = list.filter(m => m.type.toLowerCase() === this.kardexTipoFiltro.toLowerCase());
+    }
+
+    if (this.kardexBusqueda.trim()) {
+      const term = this.kardexBusqueda.trim().toLowerCase();
+      list = list.filter(m =>
+        m.reference.toLowerCase().includes(term) ||
+        m.supplyCode.toLowerCase().includes(term) ||
+        this.supplyName(m.supplyCode).toLowerCase().includes(term)
+      );
+    }
+
+    return list;
   }
 
   recipeUnit(code: string): string {
@@ -289,6 +516,11 @@ export class Inventario {
 
   supplyName(code: string): string {
     return this.supplies().find((supply: Insumo) => supply.code === code)?.name ?? code;
+  }
+
+  supplyUnit(code: string): string {
+    const supply = this.supplies().find(item => item.code === code);
+    return supply?.unitOfMeasure ? supply.unitOfMeasure : '';
   }
 
   supplyCount(status: Insumo['status']): number {

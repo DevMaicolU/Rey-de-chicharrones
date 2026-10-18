@@ -46,7 +46,44 @@ export class Proveedores {
   deleteModalVisible = false;
 
   add(): void {
-    const resultado = this.database.addProvider(this.providerForm.getRawValue());
+    this.error = '';
+    this.message = '';
+    const val = this.providerForm.getRawValue();
+    const cleanName = val.name.trim();
+    const cleanNit = val.nit.trim();
+    const cleanEmail = val.email.trim();
+
+    if (!cleanName) {
+      this.providerForm.controls.name.markAsTouched();
+      this.error = 'La razón social del proveedor es obligatoria.';
+      return;
+    }
+    if (!cleanNit) {
+      this.providerForm.controls.nit.markAsTouched();
+      this.error = 'El NIT del proveedor es obligatorio.';
+      return;
+    }
+    if (!cleanEmail) {
+      this.providerForm.controls.email.markAsTouched();
+      this.error = 'El correo electrónico es obligatorio.';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      this.providerForm.controls.email.markAsTouched();
+      this.error = 'Ingresa un formato de correo electrónico válido (ej: contacto@empresa.com).';
+      return;
+    }
+
+    const resultado = this.database.addProvider({
+      ...val,
+      name: cleanName,
+      nit: cleanNit,
+      email: cleanEmail,
+      contactName: val.contactName.trim(),
+      phone: val.phone.trim(),
+      address: val.address.trim(),
+      notes: val.notes.trim()
+    });
     this.error = resultado.error ?? '';
     this.message = resultado.ok ? 'Proveedor creado correctamente.' : '';
     if (resultado.ok) this.providerForm.reset();
@@ -78,13 +115,46 @@ export class Proveedores {
   }
 
   saveEdit(): void {
-    if (!this.editingProvider || this.editForm.invalid) {
-      this.editForm.markAllAsTouched();
-      this.error = 'Completa los datos obligatorios del proveedor.';
+    if (!this.editingProvider) return;
+    this.error = '';
+
+    const val = this.editForm.getRawValue();
+    const cleanName = val.name.trim();
+    const cleanNit = val.nit.trim();
+    const cleanEmail = val.email.trim();
+
+    if (!cleanName) {
+      this.editForm.controls.name.markAsTouched();
+      this.error = 'La razón social del proveedor es obligatoria.';
       return;
     }
+    if (!cleanNit) {
+      this.editForm.controls.nit.markAsTouched();
+      this.error = 'El NIT del proveedor es obligatorio.';
+      return;
+    }
+    if (!cleanEmail) {
+      this.editForm.controls.email.markAsTouched();
+      this.error = 'El correo electrónico es obligatorio.';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      this.editForm.controls.email.markAsTouched();
+      this.error = 'Ingresa un formato de correo electrónico válido (ej: contacto@empresa.com).';
+      return;
+    }
+
     const providerId = this.editingProvider.id;
-    const result = this.database.updateProvider(providerId, this.editForm.getRawValue());
+    const result = this.database.updateProvider(providerId, {
+      ...val,
+      name: cleanName,
+      nit: cleanNit,
+      email: cleanEmail,
+      contactName: val.contactName.trim(),
+      phone: val.phone.trim(),
+      address: val.address.trim(),
+      notes: val.notes.trim()
+    });
     this.error = result.error ?? '';
     if (result.ok) {
       this.message = 'Proveedor actualizado correctamente.';

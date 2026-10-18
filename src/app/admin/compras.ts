@@ -137,12 +137,48 @@ export class Compras {
   save(receiveNow: boolean): void {
     this.error = '';
     this.message = '';
-    if (this.form.invalid || !this.lines.length) {
-      this.form.markAllAsTouched();
-      this.error = 'Completa el proveedor y las líneas de compra con valores válidos.';
+
+    const value = this.form.getRawValue();
+    if (!value.providerId || Number(value.providerId) <= 0) {
+      this.form.controls.providerId.markAsTouched();
+      this.error = 'Seleccione un proveedor antes de continuar.';
       return;
     }
-    const value = this.form.getRawValue();
+    if (!value.date) {
+      this.form.controls.date.markAsTouched();
+      this.error = 'La fecha de la compra es obligatoria.';
+      return;
+    }
+    if (!this.lines.length) {
+      this.error = 'Agrega al menos una línea de insumo a la compra.';
+      return;
+    }
+
+    for (let i = 0; i < this.lines.length; i++) {
+      const line = this.lines.at(i);
+      const lineVal = line.getRawValue();
+      if (!lineVal.supplyCode) {
+        line.controls.supplyCode.markAsTouched();
+        this.error = 'Selecciona un insumo en cada una de las líneas de compra.';
+        return;
+      }
+      if (!lineVal.packages || lineVal.packages <= 0) {
+        line.controls.packages.markAsTouched();
+        this.error = 'La cantidad de paquetes debe ser un número mayor a cero.';
+        return;
+      }
+      if (!lineVal.unitsPerPackage || lineVal.unitsPerPackage <= 0) {
+        line.controls.unitsPerPackage.markAsTouched();
+        this.error = 'El contenido por unidad debe ser mayor a cero.';
+        return;
+      }
+      if (lineVal.packageCost === null || lineVal.packageCost === undefined || lineVal.packageCost < 0) {
+        line.controls.packageCost.markAsTouched();
+        this.error = 'El costo unitario no puede ser negativo.';
+        return;
+      }
+    }
+
     const items: PurchaseItem[] = value.items.map(item => ({
       ...item,
       supplyName: '',
@@ -154,10 +190,10 @@ export class Compras {
 
     const result = this.database.createPurchase(
       {
-        providerId: value.providerId,
+        providerId: Number(value.providerId),
         date: new Date(`${value.date}T00:00:00`).toISOString(),
-        invoiceNumber: value.invoiceNumber || undefined,
-        notes: value.notes || undefined,
+        invoiceNumber: value.invoiceNumber?.trim() || undefined,
+        notes: value.notes?.trim() || undefined,
         items
       },
       receiveNow
@@ -168,7 +204,7 @@ export class Compras {
       return;
     }
 
-    this.message = receiveNow ? 'Compra recibida y stock actualizado.' : 'Pedido guardado correctamente.';
+    this.message = receiveNow ? 'Compra recibida y stock actualizado en el inventario.' : 'Pedido guardado correctamente.';
     this.form.reset({ providerId: 0, date: new Date().toISOString().slice(0, 10), invoiceNumber: '', notes: '' });
     this.lines.clear();
     this.addLine();
