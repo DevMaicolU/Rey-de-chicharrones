@@ -2,11 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Inventario } from './inventario';
 import { DatabaseService } from '../servicios/database.service';
+import { ToastService } from '../servicios/toast.service';
 
 describe('Inventario', () => {
   let fixture: ComponentFixture<Inventario>;
   let component: Inventario;
   let db: DatabaseService;
+  let toastService: ToastService;
 
   beforeEach(() => {
     localStorage.clear();
@@ -16,6 +18,7 @@ describe('Inventario', () => {
     });
 
     db = TestBed.inject(DatabaseService);
+    toastService = TestBed.inject(ToastService);
     db.addSupply({
       code: 'PAN-01',
       name: 'Pan',
@@ -102,11 +105,18 @@ describe('Inventario', () => {
     expect(component.deleteProductModalVisible).toBe(true);
     expect(component.deletingProduct).toEqual(product);
 
+    let toastMensaje = '';
+    const sub = toastService.toasts$.subscribe(toasts => {
+      if (toasts.length) toastMensaje = toasts[toasts.length - 1].mensaje;
+    });
+
     // Confirmar eliminación
     component.confirmDeleteProduct();
     expect(component.deleteProductModalVisible).toBe(false);
     expect(component.deletingProduct).toBeNull();
-    expect(component.productMessage).toContain('eliminado');
+    expect(toastMensaje).toContain('eliminado');
+    expect(component.productMessage).toBe('');
+    sub.unsubscribe();
 
     const existe = db.activeProducts.some(p => p.id === product.id);
     expect(existe).toBe(false);
@@ -130,10 +140,17 @@ describe('Inventario', () => {
       price: 19500
     });
 
+    let toastMensaje = '';
+    const sub = toastService.toasts$.subscribe(toasts => {
+      if (toasts.length) toastMensaje = toasts[toasts.length - 1].mensaje;
+    });
+
     // Guardar cambios
     component.saveEditedProduct();
     expect(component.editProductModalVisible).toBe(false);
-    expect(component.productMessage).toContain('actualizado correctamente');
+    expect(toastMensaje).toContain('actualizado correctamente');
+    expect(component.productMessage).toBe('');
+    sub.unsubscribe();
 
     const actualizado = db.activeProducts.find(p => p.id === product.id);
     expect(actualizado?.name).toBe('Producto Modificado');

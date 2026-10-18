@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DatabaseService, Insumo, StockMovement, UnitOfMeasure } from '../servicios/database.service';
+import { ToastService } from '../servicios/toast.service';
 import { Product } from '../entidades/modelos';
 import { IMAGEN_RESPALDO, usarImagenRespaldo } from '../util/imagen';
 
@@ -15,6 +16,7 @@ import { IMAGEN_RESPALDO, usarImagenRespaldo } from '../util/imagen';
 export class Inventario {
   private readonly database = inject(DatabaseService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly toast = inject(ToastService);
 
   readonly products = toSignal(this.database.activeProducts$, { initialValue: this.database.activeProducts });
   readonly supplies = toSignal(this.database.supplies$, { initialValue: this.database.supplies });
@@ -122,6 +124,7 @@ export class Inventario {
     }
 
     this.productMessage = `Producto "${cleanName}" creado correctamente.`;
+    this.toast.exito(`Producto "${cleanName}" creado correctamente.`);
     this.productForm.reset({ name: '', description: '', price: 0, imageUrl: '', type: 'Comida' });
     this.recipeItems.clear();
   }
@@ -162,6 +165,7 @@ export class Inventario {
   }
 
   openEditProduct(product: Product): void {
+    this.productMessage = '';
     this.editingProduct = product;
     this.editingProductId = product.id;
     this.editProductError = '';
@@ -253,7 +257,8 @@ export class Inventario {
       return;
     }
 
-    this.productMessage = `Producto "${cleanName}" actualizado correctamente.`;
+    this.productMessage = '';
+    this.toast.exito(`Producto "${cleanName}" actualizado correctamente.`);
     this.closeEditProduct();
   }
 
@@ -271,6 +276,7 @@ export class Inventario {
   deleteProductModalVisible = false;
 
   openDeleteProduct(product: Product): void {
+    this.productMessage = '';
     this.deletingProduct = product;
     this.deleteProductModalVisible = true;
   }
@@ -282,8 +288,10 @@ export class Inventario {
 
   confirmDeleteProduct(): void {
     if (!this.deletingProduct) return;
+    const productName = this.deletingProduct.name;
     this.database.removeActiveProduct(this.deletingProduct.id);
-    this.productMessage = `Producto "${this.deletingProduct.name}" eliminado del menú activo.`;
+    this.productMessage = '';
+    this.toast.exito(`Producto "${productName}" eliminado del menú activo.`);
     this.closeDeleteProduct();
   }
 
@@ -357,10 +365,12 @@ export class Inventario {
     }
 
     this.supplyMessage = `Insumo "${cleanName}" registrado correctamente.`;
+    this.toast.exito(`Insumo "${cleanName}" registrado correctamente.`);
     this.supplyForm.reset({ code: '', name: '', unitOfMeasure: 'gramos', preferredProviderId: 0 });
   }
 
   openEditSupply(supply: Insumo): void {
+    this.supplyMessage = '';
     this.editingSupplyCode = supply.code;
     this.editSupplyError = '';
     this.editSupplyForm.setValue({
@@ -409,7 +419,8 @@ export class Inventario {
       return;
     }
 
-    this.supplyMessage = `Insumo "${cleanName}" actualizado correctamente.`;
+    this.supplyMessage = '';
+    this.toast.exito(`Insumo "${cleanName}" actualizado correctamente.`);
     this.closeEditSupply();
   }
 
@@ -418,6 +429,7 @@ export class Inventario {
   }
 
   openDeleteSupply(supply: Insumo): void {
+    this.supplyMessage = '';
     this.deletingSupply = supply;
     this.deleteSupplyError = '';
     this.deleteSupplyModalVisible = true;
@@ -438,7 +450,9 @@ export class Inventario {
       return;
     }
 
-    this.supplyMessage = `Insumo "${this.deletingSupply.name}" eliminado correctamente.`;
+    const supplyName = this.deletingSupply.name;
+    this.supplyMessage = '';
+    this.toast.exito(`Insumo "${supplyName}" eliminado correctamente.`);
     this.closeDeleteSupply();
   }
 
