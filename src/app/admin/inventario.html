@@ -183,38 +183,138 @@
       </div>
     </div>
 
-    <!-- Resumen de estado de existencias -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="h4 text-danger fw-bold mb-0">Existencias de insumos</h2>
+    <!-- Resumen de estado de existencias (CU-08, RF-15, RF-24) -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <div>
+        <h2 class="h4 text-danger fw-bold mb-0">Existencias de insumos</h2>
+        <p class="text-secondary small mb-0">Consulta el estado actual de la materia prima, niveles de disponibilidad y alertas de stock.</p>
+      </div>
+      @if (hayFiltrosInsumosActivos) {
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="button" (click)="limpiarFiltrosInsumos()">
+          ✕ Limpiar filtros
+        </button>
+      }
     </div>
-    <div class="row g-3 mb-3" aria-label="Resumen de existencias">
+
+    <!-- Alerta dinámica de stock crítico / escaso (RF-24) -->
+    @if (hayInsumosBajoStock) {
+      <div class="alert alert-warning border-0 shadow-sm rounded-4 d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3" role="alert">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-4" aria-hidden="true">⚠️</span>
+          <div>
+            <strong>Alerta de reabastecimiento (RF-24):</strong>
+            <span class="ms-1">
+              Se registran <span class="badge text-bg-warning">{{ supplyCount('Escaso') }} escaso(s)</span> y
+              <span class="badge text-bg-danger">{{ supplyCount('Agotado') }} agotado(s)</span> bajo stock mínimo.
+            </span>
+          </div>
+        </div>
+        <a routerLink="/admin/compras" class="btn btn-sm btn-warning fw-semibold shadow-sm px-3 text-dark text-decoration-none">
+          🛒 Solicitar compra a proveedores
+        </a>
+      </div>
+    }
+
+    <!-- Tarjetas interactivas de resumen métrico (RF-15, RF-24) -->
+    <div class="row g-3 mb-4" aria-label="Resumen de existencias">
       <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm h-100 rounded-4">
-          <div class="card-body">
-            <div class="small text-secondary mb-1">✅ Disponibles</div>
-            <div class="h3 mb-0 text-success fw-bold">{{ supplyCount('Disponible') }}</div>
+        <div class="card border-0 shadow-sm h-100 rounded-4"
+             [class.border]="insumoFiltroEstado === 'Disponible'"
+             [class.border-success]="insumoFiltroEstado === 'Disponible'"
+             [class.border-2]="insumoFiltroEstado === 'Disponible'"
+             (click)="filtrarInsumosPorEstado('Disponible')"
+             role="button"
+             tabindex="0"
+             style="cursor: pointer;"
+             [title]="'Filtrar por insumos disponibles'">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="small text-secondary mb-1">✅ Disponibles</div>
+              <div class="h3 mb-0 text-success fw-bold">{{ supplyCount('Disponible') }}</div>
+            </div>
+            <span class="badge text-bg-success rounded-pill px-2 py-1 small">
+              {{ insumoFiltroEstado === 'Disponible' ? 'Filtro activo' : 'Clic para filtrar' }}
+            </span>
           </div>
         </div>
       </div>
       <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm h-100 rounded-4">
-          <div class="card-body">
-            <div class="small text-secondary mb-1">⚠️ Escasos (bajo mínimo)</div>
-            <div class="h3 mb-0 text-warning fw-bold">{{ supplyCount('Escaso') }}</div>
+        <div class="card border-0 shadow-sm h-100 rounded-4"
+             [class.border]="insumoFiltroEstado === 'Escaso'"
+             [class.border-warning]="insumoFiltroEstado === 'Escaso'"
+             [class.border-2]="insumoFiltroEstado === 'Escaso'"
+             (click)="filtrarInsumosPorEstado('Escaso')"
+             role="button"
+             tabindex="0"
+             style="cursor: pointer;"
+             [title]="'Filtrar por insumos escasos'">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="small text-secondary mb-1">⚠️ Escasos (bajo mínimo)</div>
+              <div class="h3 mb-0 text-warning fw-bold">{{ supplyCount('Escaso') }}</div>
+            </div>
+            <span class="badge text-bg-warning text-dark rounded-pill px-2 py-1 small">
+              {{ insumoFiltroEstado === 'Escaso' ? 'Filtro activo' : 'Clic para filtrar' }}
+            </span>
           </div>
         </div>
       </div>
       <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm h-100 rounded-4">
-          <div class="card-body">
-            <div class="small text-secondary mb-1">🔴 Agotados</div>
-            <div class="h3 mb-0 text-danger fw-bold">{{ supplyCount('Agotado') }}</div>
+        <div class="card border-0 shadow-sm h-100 rounded-4"
+             [class.border]="insumoFiltroEstado === 'Agotado'"
+             [class.border-danger]="insumoFiltroEstado === 'Agotado'"
+             [class.border-2]="insumoFiltroEstado === 'Agotado'"
+             (click)="filtrarInsumosPorEstado('Agotado')"
+             role="button"
+             tabindex="0"
+             style="cursor: pointer;"
+             [title]="'Filtrar por insumos agotados'">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="small text-secondary mb-1">🔴 Agotados</div>
+              <div class="h3 mb-0 text-danger fw-bold">{{ supplyCount('Agotado') }}</div>
+            </div>
+            <span class="badge text-bg-danger rounded-pill px-2 py-1 small">
+              {{ insumoFiltroEstado === 'Agotado' ? 'Filtro activo' : 'Clic para filtrar' }}
+            </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tabla de insumos -->
+    <!-- Barra de búsqueda y filtrado de insumos (RF-16) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-3 p-3 bg-light">
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-md-7">
+          <label class="form-label small fw-semibold text-secondary mb-1" for="insumoBusqueda">🔍 Buscar insumo (RF-16)</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">🔎</span>
+            <input id="insumoBusqueda" type="text" class="form-control border-start-0"
+                   [(ngModel)]="insumoBusqueda"
+                   placeholder="Buscar por código (ej: PAN-01) o nombre del insumo...">
+            @if (insumoBusqueda) {
+              <button class="btn btn-outline-secondary" type="button" (click)="insumoBusqueda = ''" title="Borrar búsqueda">✕</button>
+            }
+          </div>
+        </div>
+        <div class="col-12 col-sm-8 col-md-3">
+          <label class="form-label small fw-semibold text-secondary mb-1" for="insumoFiltroEstado">Filtrar por estado</label>
+          <select id="insumoFiltroEstado" class="form-select" [(ngModel)]="insumoFiltroEstado">
+            <option value="todos">Todos los estados</option>
+            <option value="Disponible">Solo Disponibles</option>
+            <option value="Escaso">Solo Escasos</option>
+            <option value="Agotado">Solo Agotados</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-4 col-md-2 d-flex align-items-end">
+          <button class="btn btn-outline-secondary w-100 mt-md-4" type="button" (click)="limpiarFiltrosInsumos()" [disabled]="!hayFiltrosInsumosActivos">
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de insumos (RF-15, RF-17) -->
     <div class="table-responsive card border-0 shadow-sm rounded-4 mb-4">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-dark">
@@ -229,13 +329,18 @@
           </tr>
         </thead>
         <tbody>
-          @for (supply of supplies(); track supply.code) {
+          @for (supply of filteredSupplies; track supply.code) {
             <tr>
-              <td class="font-monospace small">{{ supply.code }}</td>
+              <td class="font-monospace small fw-bold">{{ supply.code }}</td>
               <td class="fw-semibold">{{ supply.name }}</td>
               <td>{{ providers().find(provider => provider.id === supply.preferredProviderId)?.name || '—' }}</td>
-              <td>{{ supply.unitOfMeasure }}</td>
-              <td class="fw-bold" [class.text-danger]="supply.status === 'Agotado'" [class.text-warning]="supply.status === 'Escaso'">{{ supply.quantity }} {{ supply.unitOfMeasure }}</td>
+              <td><span class="badge text-bg-light border text-secondary">{{ supply.unitOfMeasure }}</span></td>
+              <td>
+                <span class="fw-bold" [class.text-danger]="supply.status === 'Agotado'" [class.text-warning]="supply.status === 'Escaso'">
+                  {{ supply.quantity }} {{ supply.unitOfMeasure }}
+                </span>
+                <span class="small text-secondary d-block" style="font-size: 0.75rem;">(Mín: {{ supply.minimumQuantity }})</span>
+              </td>
               <td>
                 <span class="badge rounded-pill"
                   [class.text-bg-success]="supply.status === 'Disponible'"
@@ -256,7 +361,20 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="7" class="text-center text-secondary py-4">No hay insumos registrados. Crea el primero con el formulario de arriba.</td></tr>
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                @if (hayFiltrosInsumosActivos) {
+                  <div class="text-warning mb-2 fs-1" aria-hidden="true">🔎</div>
+                  <h3 class="h6 text-danger fw-bold mb-1">El insumo no existe dentro del inventario (RF-43)</h3>
+                  <p class="text-secondary small mb-3">No se encontraron insumos que coincidan con "{{ insumoBusqueda }}" o el estado seleccionado.</p>
+                  <button class="btn btn-sm btn-outline-danger" type="button" (click)="limpiarFiltrosInsumos()">Restablecer búsqueda</button>
+                } @else {
+                  <div class="text-secondary mb-2 fs-1" aria-hidden="true">📦</div>
+                  <h3 class="h6 text-secondary fw-semibold mb-1">No hay insumos registrados</h3>
+                  <p class="text-secondary small mb-0">Crea el primer insumo utilizando el formulario de arriba.</p>
+                }
+              </td>
+            </tr>
           }
         </tbody>
       </table>

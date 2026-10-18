@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Inventario } from './inventario';
 import { DatabaseService } from '../servicios/database.service';
 
@@ -10,7 +11,8 @@ describe('Inventario', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      imports: [Inventario]
+      imports: [Inventario],
+      providers: [provideRouter([])]
     });
 
     db = TestBed.inject(DatabaseService);
@@ -204,4 +206,33 @@ describe('Inventario', () => {
     expect(component.supplyUnit('CAR-01')).toBe('gramos');
     expect(component.supplyUnit('INEXISTENTE')).toBe('');
   });
+
+  it('permite buscar insumos por código o nombre y filtrar por estado (CU-08)', () => {
+    expect(component.filteredSupplies.length).toBe(2);
+
+    // Buscar por código
+    component.insumoBusqueda = 'PAN-01';
+    expect(component.filteredSupplies.length).toBe(1);
+    expect(component.filteredSupplies[0].code).toBe('PAN-01');
+
+    // Buscar por nombre
+    component.insumoBusqueda = 'Carne';
+    expect(component.filteredSupplies.length).toBe(1);
+    expect(component.filteredSupplies[0].code).toBe('CAR-01');
+
+    // Buscar término inexistente (RF-43)
+    component.insumoBusqueda = 'INEXISTENTE';
+    expect(component.filteredSupplies.length).toBe(0);
+
+    // Limpiar búsqueda
+    component.limpiarFiltrosInsumos();
+    expect(component.filteredSupplies.length).toBe(2);
+    expect(component.hayFiltrosInsumosActivos).toBe(false);
+
+    // Filtrar por estado
+    component.filtrarInsumosPorEstado('Agotado');
+    expect(component.insumoFiltroEstado).toBe('Agotado');
+    expect(component.filteredSupplies.every(s => s.status === 'Agotado')).toBe(true);
+  });
 });
+

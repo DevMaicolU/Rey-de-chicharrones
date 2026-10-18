@@ -2,13 +2,14 @@ import { CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { DatabaseService, Insumo, StockMovement, UnitOfMeasure } from '../servicios/database.service';
 import { Product } from '../entidades/modelos';
 import { IMAGEN_RESPALDO, usarImagenRespaldo } from '../util/imagen';
 
 @Component({
   selector: 'app-inventario',
-  imports: [CurrencyPipe, DatePipe, TitleCasePipe, ReactiveFormsModule, FormsModule],
+  imports: [CurrencyPipe, DatePipe, TitleCasePipe, ReactiveFormsModule, FormsModule, RouterLink],
   templateUrl: './inventario.html'
 })
 export class Inventario {
@@ -439,6 +440,45 @@ export class Inventario {
 
     this.supplyMessage = `Insumo "${this.deletingSupply.name}" eliminado correctamente.`;
     this.closeDeleteSupply();
+  }
+
+  // ===== CONSULTA Y FILTRADO DE INSUMOS (CU-08, RF-12, RF-15, RF-16, RF-24, RF-43) =====
+  insumoBusqueda = '';
+  insumoFiltroEstado: 'todos' | Insumo['status'] = 'todos';
+
+  get filteredSupplies(): Insumo[] {
+    let list = this.supplies();
+
+    if (this.insumoFiltroEstado !== 'todos') {
+      list = list.filter(supply => supply.status === this.insumoFiltroEstado);
+    }
+
+    if (this.insumoBusqueda.trim()) {
+      const term = this.insumoBusqueda.trim().toLowerCase();
+      list = list.filter(supply =>
+        supply.code.toLowerCase().includes(term) ||
+        supply.name.toLowerCase().includes(term)
+      );
+    }
+
+    return list;
+  }
+
+  get hayFiltrosInsumosActivos(): boolean {
+    return !!(this.insumoBusqueda.trim() || this.insumoFiltroEstado !== 'todos');
+  }
+
+  filtrarInsumosPorEstado(estado: 'todos' | Insumo['status']): void {
+    this.insumoFiltroEstado = this.insumoFiltroEstado === estado && estado !== 'todos' ? 'todos' : estado;
+  }
+
+  limpiarFiltrosInsumos(): void {
+    this.insumoBusqueda = '';
+    this.insumoFiltroEstado = 'todos';
+  }
+
+  get hayInsumosBajoStock(): boolean {
+    return this.supplyCount('Escaso') > 0 || this.supplyCount('Agotado') > 0;
   }
 
   // ===== FILTROS Y FUNCIONALIDAD DE KARDEX =====
